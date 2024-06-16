@@ -21,13 +21,18 @@ import getCsrfToken from '@/helpers/getCsrfToken';
 import isAuthenticated from '@/helpers/auth/isAuthenticated';
 import Overlay from '@/components/sub/Overlay';
 import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
-import socket from '@/config/ClientSocket';
+// import socket from '@/config/ClientSocket';
+import WebSocketClient from '@/config/WebSocket';
+import WebSocketConstants from '@/config/constants/websocket'
+import GameConstants from '@/config/constants/game'
 
-export default function Play({userData, serverFailure = false}) {
+
+export default function Play({userData, serverFailure = false, token = ""}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
-  const { API_URL } = publicRuntimeConfig;  
+  const { API_URL, GAME_API_REST_URL, GAME_API_WS_URL } = publicRuntimeConfig;  
+  const [socket, setSocket] = useState(null);
 
   const router = useRouter();
 
@@ -55,52 +60,46 @@ export default function Play({userData, serverFailure = false}) {
   const [resendLoading, setResendLoading] = useState(false);  
   const [resendVerificationLinkResponse, setResendVerificationLinkResponse] = useState(null);    
 
+
   const [formData, setFormData] = useState({
-      type : 'rapid',
-      time_control : '10 min'
+      type : GameConstants.GAME_TYPE_RAPID,
+      time_control : GameConstants.GAME_TIME_CONTROL_600_0,
   });
 
+  useEffect(() => {
+    return () => {
+      if (socket) socket.close()
+    }
+  }, [])
 
-  socket.on('start-game', (game_id) => {
-    router.push(`/play/${game_id}`);
-    return;
-  });
+  // socket.on('start-game', (game_id) => {
+  //   router.push(`/play/${game_id}`);
+  //   return;
+  // });
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => { 
+    console.log(formData)
     e.preventDefault();
 
     try {
-      const response = await fetch(API_URL + '/play/online/search',
-        {
-          method : 'POST', 
-          headers : {
-            'Content-Type' : 'application/json',
-            'X-CSRF-Token' : csrfToken
-          },
-          credentials : 'include',
-          body : JSON.stringify({
-            type : formData.type, 
-            time_control : formData.time_control
-          })
-        }
-      )
-
-      const parsedResponse = await response.json();
-      console.log(parsedResponse);
-
-      if (parsedResponse.code == 200 && parsedResponse.type == "WAIT_IN_POOL"){
-        socket.emit('create-room', parsedResponse.data.game_id);
-        setOverlay(true);
-        return;
-      }
-
-      if (parsedResponse.code == 200 && parsedResponse.type == "FOUND_MATCH"){
-        socket.emit('join-room', parsedResponse.data.game_id);
-        setOverlay(true);
-        return;
-      }      
-
+      const ws = WebSocketClient(GAME_API_WS_URL, token, {
+        onOpen : () => {
+            ws.send(JSON.stringify(
+              {
+                "event": WebSocketConstants.WS_EVENT_MATCHMAKING,
+                "data": formData
+              }
+            )
+          )
+        },
+        onMessage : () => {},
+        onError : () => {},
+        onClose : () => {},
+      })
+      if (ws instanceof Error) throw ws
+      setSocket(ws) 
     } catch(err){
+      console.error(err)
       setServerError(true);
       return;         
     }
@@ -211,23 +210,23 @@ export default function Play({userData, serverFailure = false}) {
                     </Flex>
                     <Flex gap='.5rem' w='100%' flexGrow={1}>
                         <Button onClick={() => {
-                          setFormData({type : 'bullet', time_control : '1 min'});
+                          setFormData({type : GameConstants.GAME_TYPE_BULLET, time_control : GameConstants.GAME_TIME_CONTROL_60_0});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
                       }}>1 min</Button>
                           <Button onClick={() => {
-                          setFormData({type : 'bullet', time_control : '1 | 1'});
+                          setFormData({type : GameConstants.GAME_TYPE_BULLET, time_control :  GameConstants.GAME_TIME_CONTROL_60_1});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
                       }}>1 | 1</Button>
                   <Button onClick={() => {
-                          setFormData({type : 'bullet', time_control : '2 | 1'});
+                          setFormData({type : GameConstants.GAME_TYPE_BULLET, time_control : GameConstants.GAME_TIME_CONTROL_120_0});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
-                      }}>2 | 1</Button>                                             
+                      }}>2 | 0</Button>                                             
                     </Flex>
 
                     <Flex gap='.5rem' mt='1rem'>
@@ -236,19 +235,19 @@ export default function Play({userData, serverFailure = false}) {
                     </Flex>
                     <Flex gap='.5rem' w='100%' flexGrow={1}>
                         <Button onClick={() => {
-                          setFormData({type : 'blitz', time_control : '3 min'});
+                          setFormData({type : GameConstants.GAME_TYPE_BLITZ, time_control : GameConstants.GAME_TIME_CONTROL_180_0});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
                       }}>3 min</Button>
                           <Button onClick={() => {
-                          setFormData({type : 'blitz', time_control : '3 | 2'});
+                          setFormData({type : GameConstants.GAME_TYPE_BLITZ, time_control : GameConstants.GAME_TIME_CONTROL_180_1});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
-                      }}>3 | 2</Button>
+                      }}>3 | 1</Button>
                   <Button onClick={() => {
-                          setFormData({type : 'blitz', time_control : '5 min'});
+                          setFormData({type : GameConstants.GAME_TYPE_BLITZ, time_control : GameConstants.GAME_TIME_CONTROL_300_0});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
@@ -261,19 +260,19 @@ export default function Play({userData, serverFailure = false}) {
                     </Flex>
                     <Flex gap='.5rem' w='100%' flexGrow={1}>
                         <Button onClick={() => {
-                          setFormData({type : 'rapid', time_control : '5 min'});
+                          setFormData({type : GameConstants.GAME_TYPE_RAPID, time_control : GameConstants.GAME_TIME_CONTROL_600_0});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
-                      }}>5 min</Button>
+                      }}>10 min</Button>
                           <Button onClick={() => {
-                          setFormData({type : 'rapid', time_control : '15 | 10'});
+                          setFormData({type : GameConstants.GAME_TYPE_RAPID, time_control : GameConstants.GAME_TIME_CONTROL_900_0});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
-                      }}>15 | 10</Button>
+                      }}>15 min</Button>
                   <Button onClick={() => {
-                          setFormData({type : 'rapid', time_control : '30 min'});
+                          setFormData({type : GameConstants.GAME_TYPE_RAPID, time_control : GameConstants.GAME_TIME_CONTROL_1200_0});
                         }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
                           color : 'white',
                           bg : secondaryColor
@@ -338,7 +337,8 @@ export async function getServerSideProps(context){
       return {
         props : {
           serverFailure : false, 
-          userData : response.user
+          userData : response.user, 
+          token : req.cookies?.__SESS_TOKEN
         }
       }
     }
