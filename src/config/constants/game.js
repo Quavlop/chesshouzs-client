@@ -17,6 +17,16 @@ const constants = {
 	GAME_TIME_CONTROL_600_0  : "600-0",
 	GAME_TIME_CONTROL_900_0  : "900-0",
 	GAME_TIME_CONTROL_1200_0 : "1200-0",
+
+	CHARACTER_PAWN : "p", 
+	CHARACTER_KNIGHT : "n", 
+	CHARACTER_KING : "k",
+	CHARACTER_QUEEN : "q",
+	CHARACTER_BISHOP : "b",
+	CHARACTER_ROOK : "r",
+
+
+
 }
 
 export default constants

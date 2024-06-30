@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from '@next/font/google'
 import styles from '@/styles/Home.module.css'
-import { Text, Heading, Box, Flex} from '@chakra-ui/react'
+import { Text, Heading, Box, Flex, VStack} from '@chakra-ui/react'
 import {useColorMode, useColorModeValue} from '@chakra-ui/color-mode';
 import {colorScheme, responsiveConfig} from '@/helpers/theme.ts';
 import { useContext } from 'react';
@@ -13,9 +13,15 @@ import ServerError from '@/components/main/ServerError';
 import getCsrfToken from '@/helpers/getCsrfToken';
 import isAuthenticated from '@/helpers/auth/isAuthenticated';
 import Overlay from '@/components/sub/Overlay';
+import GameBoard from '@/components/main/GameBoard';
+import GamePanel from '@/components/main/GamePanel';
 import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
+import {transformBoard} from '@/helpers/utils/game';
+import constants from "@/config/constants/game"
 
-export default function PlayOnline({userData, serverFailure = false}) {
+
+
+export default function PlayOnline({userData, serverFailure = false, state}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -33,6 +39,28 @@ export default function PlayOnline({userData, serverFailure = false}) {
   const [emailVerificationMessage, setEmailVerificationMessage] = useState("");  
   const [resendLoading, setResendLoading] = useState(false);  
   const [resendVerificationLinkResponse, setResendVerificationLinkResponse] = useState(null);    
+
+  const [gameState, setGameState] = useState(state)
+
+  // object of row and col
+  const [clickCoordinate, setClickCoordinate] = useState({
+      row : null, 
+      col : null
+  })
+
+  const clickCoordinateHandler = (coordinate, fn) => {
+      setClickCoordinate({
+        row : coordinate.row, 
+        col : coordinate.col
+      })
+      
+      fn()
+  } 
+
+  const setGameStateHandler = (newState) => { 
+      setGameState(newState)
+  }
+
 
   const resendEmailVerificationLink = async (e) => {
     e.preventDefault();
@@ -84,19 +112,22 @@ export default function PlayOnline({userData, serverFailure = false}) {
 
   useEffect(() => {
     if (serverFailure) return;
-
     try {
+      const preventNavigation = () => {
+        window.history.pushState(null, null, window.location.pathname);
+      };
+  
+      preventNavigation();
+
       const setCSRFToken = async () => {
         const token = await getCsrfToken(API_URL);
         setCsrfToken(token);
       }
       setCSRFToken();
 
-      const preventNavigation = () => {
-        window.history.pushState(null, null, window.location.pathname);
-      };
-  
-      preventNavigation();
+
+
+
   
       window.addEventListener('popstate', preventNavigation);
   
@@ -113,11 +144,21 @@ export default function PlayOnline({userData, serverFailure = false}) {
         setOverlay(true);      
       }    
       setUser(userData);
+
+      // TODO : check apakah perlu transform board
+
+
+
     }
     return () => {
       window.removeEventListener('popstate', preventNavigation);
     };         
   }, []);
+
+  useEffect(() => {
+    console.log("HAERIN")
+    console.log(gameState)
+  }, [gameState])
 
   return (
     serverFailure 
@@ -128,7 +169,13 @@ export default function PlayOnline({userData, serverFailure = false}) {
           {!verifiedEmail && <ReVerifyEmailPopup resendEmailVerificationLink={resendEmailVerificationLink} emailVerificationResendMessage={emailVerificationMessage} resendLoading={resendLoading} responseType={resendVerificationLinkResponse}/>}
           {overlay && <Overlay/>}
 
-          <h1>geming</h1>
+          <Flex w="100vw" h="100vh">
+            <Flex width="70%" height="auto" justifyContent={"center"} flexDirection={"row"} margin="auto">
+              <GameBoard state={gameState} setGameStateHandler={setGameStateHandler} clickCoordinate={clickCoordinate} clickCoordinateHandler={clickCoordinateHandler}/>
+              <GamePanel/>
+            </Flex>
+          </Flex>
+
         </>
   )
 }
@@ -144,7 +191,6 @@ export async function getServerSideProps(context){
 
   try {
       const response = await isAuthenticated(`${API_URL}`, req.cookies?.__SESS_TOKEN, true, game_id);
-      console.log(response);
       
       if (response.code == 200){
 
@@ -156,18 +202,38 @@ export async function getServerSideProps(context){
               permanent: true,
             },
           }          
-        }
+        } 
+
+        // validate if player black then transform the stub
+        const stateStub = "rnbqkbnrrrrr|pppppppppppp|.p..........|............|pP..........|...K........|............|............|............|..........p.|PPPPPPPPPPPP|RNBQKBNRRRRR"
+        const stateRows = stateStub.split("|")
+
+        const state = Array(12).fill(null).map((_, row) =>
+            Array(12).fill(null).map((_, col) => ({
+              character : stateRows[row][col] || ".", 
+              inDefaultPosition : true,
+              image : "",
+              color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
+            }))
+        ) 
+                 
 
         return {
           props : {
             serverFailure : false, 
-            userData : response.user
+            userData : response.user,
+            state : state
           }
         }
       }
       
 
-      return { props : {serverFailure : false} }      
+      return {
+        redirect: {
+          destination: `/login`,
+          permanent: true,
+        },
+      }    
 
   } catch (err) {
       return { props : {serverFailure : true} }
@@ -180,3 +246,4 @@ PlayOnline.getLayout = (page) => {
       (page)
   );
 }
+

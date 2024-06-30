@@ -21,6 +21,7 @@ import getCsrfToken from '@/helpers/getCsrfToken';
 import isAuthenticated from '@/helpers/auth/isAuthenticated';
 import Overlay from '@/components/sub/Overlay';
 import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
+import Loading from '@/components/sub/Loading';
 // import socket from '@/config/ClientSocket';
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
@@ -52,6 +53,7 @@ export default function Play({userData, serverFailure = false, token = ""}) {
   const [verifiedEmail, setVerifiedEmail] = useState(true);  
   const [serverError, setServerError] = useState(serverFailure);    
   const [overlay, setOverlay] = useState(false);    
+  const [loading, setLoading] = useState(false);
   const [csrfToken, setCsrfToken] = useState('');  
   
   const [tab, setTab] = useState(1);
@@ -92,7 +94,18 @@ export default function Play({userData, serverFailure = false, token = ""}) {
             )
           )
         },
-        onMessage : () => {},
+        onMessage : (event) => {
+          const response = JSON.parse(event.data)
+          if (response.status == "SUCCESS" && response.event == WebSocketConstants.WS_EVENT_MATCHMAKING){
+            setOverlay(true)
+            setLoading(true)
+          } 
+          if (response.status == "SUCCESS" && response.event == WebSocketConstants.WS_EVENT_START_GAME){
+            setOverlay(false)
+            setLoading(false)
+            router.push(`/play/${response.data.id}`);
+          }
+        },
         onError : () => {},
         onClose : () => {},
       })
@@ -185,6 +198,7 @@ export default function Play({userData, serverFailure = false, token = ""}) {
 
           {!verifiedEmail && <ReVerifyEmailPopup resendEmailVerificationLink={resendEmailVerificationLink} emailVerificationResendMessage={emailVerificationMessage} resendLoading={resendLoading} responseType={resendVerificationLinkResponse}/>}
           {overlay && <Overlay/>}
+          {loading && <Loading message="Looking for enemies. Do not refresh or close the browser."/>}
 
           <Tabs boxShadow="0px 0px 10px 1px grey" isFitted variant='unstyled' maxW='900px' w={{base : '95%', sm : '95%', md : '80%'}} m='0 auto' mt='1rem' colorScheme='blue'>
             <TabList>
@@ -350,7 +364,12 @@ export async function getServerSideProps(context){
 
 
 
-      return { props : {serverFailure : false} }      
+    return {
+      redirect: {
+        destination: `/login`,
+        permanent: true,
+      },
+    }       
 
   } catch (err) {
       return { props : {serverFailure : true} }
