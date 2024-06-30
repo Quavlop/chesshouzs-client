@@ -19,7 +19,11 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         justifyContent={"center"}
         alignItems={"center"}
         onClick={() => clickCoordinateHandler({row, col}, () => {
-            const newState = handleMovement(state[row][col]?.character, {row, col}, state)
+            const newState = handleMovement(state[row][col]?.character, {
+              row, col, 
+              character : state[row][col]?.character, 
+              characterColor : state[row][col]?.characterColor,
+            }, state)
             if (!newState) return
             setGameStateHandler(newState)
         })}

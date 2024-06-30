@@ -94,11 +94,48 @@ const rookMovement = (position, state) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (straightMovementValidator(position, {row, col}, newState[row][col])){
-                newState[row][col].validMove = true
-            }
+        }
+    } 
+
+    // to up
+    for (let row = position.row; row >= 0; row--){
+        newState[row][position.col].validMove = true
+        if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
+            break
         }
     }
+
+    // to down
+    for (let row = position.row; row < boardSize; row++){
+        newState[row][position.col].validMove = true
+        if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
+            break
+        }
+    }
+
+    // to left
+    for (let col = position.col; col >= 0; col--){
+        newState[position.row][col].validMove = true
+        if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
+            break
+        }
+    }
+
+    // to right
+    for (let col = position.col; col < boardSize; col++){
+        newState[position.row][col].validMove = true
+        if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
+            break
+        }
+    }
+
+
+
+    // to right 
+
+    // to up 
+
+    // to down
 
     return newState
 }
@@ -136,6 +173,13 @@ const pawnStraightMovementValidator = (characterPosition, clickablePosition, sta
 
 const pawnKillMovementValidator = (characterPosition, clickablePosition, status) => {
     return characterPosition.row - clickablePosition.row == 1 && Math.abs(characterPosition.col - clickablePosition.col) == 1 && status?.character != "."
+}
+
+const straightMoveBlockHandler = (characterPosition, clickablePosition, status) => {
+    // if same color 
+    if (status.character.toLowerCase() == status.character){
+        
+    }
 }
 
 

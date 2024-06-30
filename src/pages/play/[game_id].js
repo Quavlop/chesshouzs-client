@@ -205,12 +205,13 @@ export async function getServerSideProps(context){
         } 
 
         // validate if player black then transform the stub
-        const stateStub = "rnbqkbnrrrrr|pppppppppppp|.p..........|............|pP..........|...K........|............|............|............|..........p.|PPPPPPPPPPPP|RNBQKBNRRRRR"
+        const stateStub = "rnbqkbnrrrrr|ppppppppPppp|.p..........|........P...|pP..........|...K........|............|.P......r.P.|............|..........p.|PPPPPPPPPPPP|RNBQKBNRRRRR"
         const stateRows = stateStub.split("|")
 
         const state = Array(12).fill(null).map((_, row) =>
             Array(12).fill(null).map((_, col) => ({
               character : stateRows[row][col] || ".", 
+              characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
               inDefaultPosition : true,
               image : "",
               color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
