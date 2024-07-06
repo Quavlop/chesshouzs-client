@@ -205,7 +205,7 @@ export async function getServerSideProps(context){
         } 
 
         // validate if player black then transform the stub
-        const stateStub = "rnbqkbnrrrrr|pPppppppPppp|.p.N........|....Nq..P...|pP...bnkB...|...K....k...|.q..........|.P......r.P.|............|........N.p.|PPPPPPPPPPPP|RNBQKBNRRRRR"
+        const stateStub = "............|............|............|............|......p.....|............|.......R....|........k...|............|........K...|............|........k..."
         const stateRows = stateStub.split("|")
 
         const state = Array(12).fill(null).map((_, row) =>

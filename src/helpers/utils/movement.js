@@ -1,3 +1,5 @@
+import constants from "@/config/constants/game";
+
 const noMovement = (position, state) => {
     const boardSize = state.length
 
@@ -33,7 +35,7 @@ const kingMovement = (position, state) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+            if (kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor) && !kingUnsafePositionHandler(position.characterColor, {row, col}, state)){
                 newState[row][col].validMove = true
             }
         }
@@ -320,6 +322,284 @@ const pawnKillMovementValidator = (characterPosition, clickablePosition, status)
     }
     return characterPosition.row - clickablePosition.row == -1 && Math.abs(characterPosition.col - clickablePosition.col) == 1 && status?.character != "."
 }
+
+const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
+    // only trigger on kingMovement function
+    const boardSize = state.length
+
+    console.log(kingColor)
+
+    // give ineligible for king flag for each square if under attack
+    var newState = state.map(row => row.slice());
+    for (let row = 0; row < boardSize; row++) {
+        for (let col = 0; col < boardSize; col++) {
+            if (!newState[row][col].characterColor || newState[row][col].characterColor == kingColor){
+                continue 
+            }
+
+            if (newState[row][col].character == constants.CHARACTER_PAWN || newState[row][col].character == constants.CHARACTER_PAWN.toUpperCase()){
+                if (!pawnKillMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                    continue
+                }
+                return true
+            } else if (newState[row][col].character == constants.CHARACTER_BISHOP || newState[row][col].character == constants.CHARACTER_BISHOP.toUpperCase()){
+                if (!diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                    continue
+                }
+
+                // diagonal move handler 
+
+                if (moveCandidate.col > col && moveCandidate.row < row){
+                    // bishop center, target on top - right 
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow >= moveCandidate.row && iCol <= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow-- 
+                            iCol++
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow--
+                        iCol++
+                    }
+                    return true
+                } else if (moveCandidate.col > col && moveCandidate.row > row){
+                    // bishop center, target on bottom - right
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow <= moveCandidate.row && iCol <= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow++ 
+                            iCol++
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow++ 
+                        iCol++
+                    }
+                    return true
+                } else if (moveCandidate.col < col && moveCandidate.row < row) {
+                    // bishop center, target on top - left
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow >= moveCandidate.row && iCol >= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow-- 
+                            iCol--
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow-- 
+                        iCol--
+                    }
+                    return true
+                } else {
+                    // bishop center, target on bottom - left
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow <= moveCandidate.row && iCol >= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow++ 
+                            iCol--
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow++ 
+                        iCol--
+                    }
+                    return true
+                }
+
+
+            } else if (newState[row][col].character == constants.CHARACTER_ROOK || newState[row][col].character == constants.CHARACTER_ROOK.toUpperCase()) {
+                if (!straightMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                    continue
+                }
+
+                // straight move handler
+                if (moveCandidate.row == row){
+                    if (col > moveCandidate.col){ // if rook on the right, king on the left then invert the direction 
+                        for (let iCol = col; iCol >= moveCandidate.col; iCol--){
+                            if (iCol == col) continue
+                            if (newState[row][iCol].characterColor && newState[row][iCol].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    } else { // rook on left, king on right
+                        for (let iCol = col; iCol <= moveCandidate.col; iCol++){
+                            if (iCol == col) continue
+                            if (newState[row][iCol].characterColor && newState[row][iCol].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    }
+                } else if (moveCandidate.col == col){
+                    if (row < moveCandidate.row){ // rook on top, king on bottom
+                        for (let iRow = row; iRow <= moveCandidate.row; iRow++){
+                            if (iRow == row) continue
+                            if (newState[iRow][col].characterColor && newState[iRow][col].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    } else { // rook on bottom, king on top
+                        for (let iRow = row; iRow >= moveCandidate.row; iRow--){
+                            if (iRow == row) continue
+                            if (newState[iRow][col].characterColor && newState[iRow][col].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    }
+                }
+
+            } else if (newState[row][col].character == constants.CHARACTER_QUEEN || newState[row][col].character == constants.CHARACTER_QUEEN.toUpperCase()) {
+                if (!straightMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) && !diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                    continue
+                }
+
+                   // straight move handler
+                   if (moveCandidate.row == row){
+                    if (col > moveCandidate.col){ // if rook on the right, king on the left then invert the direction 
+                        for (let iCol = col; iCol >= moveCandidate.col; iCol--){
+                            if (iCol == col) continue
+                            if (newState[row][iCol].characterColor && newState[row][iCol].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    } else { // rook on left, king on right
+                        for (let iCol = col; iCol <= moveCandidate.col; iCol++){
+                            if (iCol == col) continue
+                            if (newState[row][iCol].characterColor && newState[row][iCol].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    }
+                } else if (moveCandidate.col == col){
+                    if (row < moveCandidate.row){ // rook on top, king on bottom
+                        for (let iRow = row; iRow <= moveCandidate.row; iRow++){
+                            if (iRow == row) continue
+                            if (newState[iRow][col].characterColor && newState[iRow][col].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    } else { // rook on bottom, king on top
+                        for (let iRow = row; iRow >= moveCandidate.row; iRow--){
+                            if (iRow == row) continue
+                            if (newState[iRow][col].characterColor && newState[iRow][col].characterColor != newState[row][col].characterColor){
+                                return false
+                            }
+                        } 
+                        return true
+                    }
+                }
+
+
+                                 // diagonal move handler 
+
+                if (moveCandidate.col > col && moveCandidate.row < row){
+                    // bishop center, target on top - right 
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow >= moveCandidate.row && iCol <= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow-- 
+                            iCol++
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow--
+                        iCol++
+                    }
+                    return true
+                } else if (moveCandidate.col > col && moveCandidate.row > row){
+                    // bishop center, target on bottom - right
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow <= moveCandidate.row && iCol <= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow++ 
+                            iCol++
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow++ 
+                        iCol++
+                    }
+                    return true
+                } else if (moveCandidate.col < col && moveCandidate.row < row) {
+                    // bishop center, target on top - left
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow >= moveCandidate.row && iCol >= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow-- 
+                            iCol--
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow-- 
+                        iCol--
+                    }
+                    return true
+                } else {
+                    // bishop center, target on bottom - left
+                    var iRow = row 
+                    var iCol = col
+                    while (iRow <= moveCandidate.row && iCol >= moveCandidate.col){
+                        if (iRow == row || iCol == col) {
+                            iRow++ 
+                            iCol--
+                            continue
+                        }
+                        if (newState[iRow][iCol].characterColor && newState[iRow][iCol].characterColor != newState[row][col].characterColor) {
+                            return false
+                        }
+                        iRow++ 
+                        iCol--
+                    }
+                    return true
+                }
+            
+            } else if (newState[row][col].character == constants.CHARACTER_KING || newState[row][col].character == constants.CHARACTER_KING.toUpperCase()) {
+                console.log(moveCandidate, {row, col}, Math.abs(moveCandidate.row-row), Math.abs(moveCandidate.col - col))
+                if (Math.abs(moveCandidate.col - col) <= 1 && Math.abs(moveCandidate.row - row) <= 1){
+                    return true
+                } 
+            } else if (newState[row][col].character == constants.CHARACTER_KNIGHT || newState[row][col].character == constants.CHARACTER_KNIGHT.toUpperCase()){
+                if (!knightShapeMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) && !diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                    continue
+                }
+                return true
+            }
+            
+
+        }
+    }
+
+    return false
+}
+
 
 
 export {
