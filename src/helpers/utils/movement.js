@@ -1,4 +1,5 @@
 import constants from "@/config/constants/game";
+import { LinkedList, Node } from "./linked_list";
 
 const noMovement = (position, state) => {
     const boardSize = state.length
@@ -165,40 +166,52 @@ const bishopMovement = (position, state) => {
         }
     }
 
+    var disableBottomToUpRightMove = validateDisableBottomToUpRightDiagonalMovement(boardSize, position, newState)
+    var disableUpToBottomRightMove = validateDisableDownToRightDiagonalMovement(boardSize, position, newState)
+
     // top-left 
-    var rowCtr = position.row
-    var colCtr = position.col 
-    while (rowCtr > 0 && colCtr > 0){
-        if (newState[rowCtr-1][colCtr-1].characterColor && newState[rowCtr-1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr-1) break
-        newState[--rowCtr][--colCtr].validMove = true 
-        if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+    if (!disableUpToBottomRightMove){
+        var rowCtr = position.row
+        var colCtr = position.col 
+        while (rowCtr > 0 && colCtr > 0){
+            if (newState[rowCtr-1][colCtr-1].characterColor && newState[rowCtr-1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr-1) break
+            newState[--rowCtr][--colCtr].validMove = true 
+            if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+        }
     }
     
     // top-right 
-    rowCtr = position.row
-    colCtr = position.col 
-    while (rowCtr > 0 && colCtr < boardSize - 1){
-        if (newState[rowCtr-1][colCtr+1].characterColor && newState[rowCtr-1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr+1) break
-        newState[--rowCtr][++colCtr].validMove = true
-        if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+    if (!disableBottomToUpRightMove){
+        rowCtr = position.row
+        colCtr = position.col 
+        while (rowCtr > 0 && colCtr < boardSize - 1){
+            if (newState[rowCtr-1][colCtr+1].characterColor && newState[rowCtr-1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr+1) break
+            newState[--rowCtr][++colCtr].validMove = true
+            if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+        }
     }
 
+
     // bottom-left 
-    rowCtr = position.row
-    colCtr = position.col 
-    while (rowCtr < boardSize - 1 && colCtr > 0){
-        if (newState[rowCtr+1][colCtr-1].characterColor && newState[rowCtr+1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr-1) break
-        newState[++rowCtr][--colCtr].validMove = true
-        if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+    if (!disableBottomToUpRightMove){
+        rowCtr = position.row
+        colCtr = position.col 
+        while (rowCtr < boardSize - 1 && colCtr > 0){
+            if (newState[rowCtr+1][colCtr-1].characterColor && newState[rowCtr+1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr-1) break
+            newState[++rowCtr][--colCtr].validMove = true
+            if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+        }
     }
     
-    // bottom-right
-    rowCtr = position.row
-    colCtr = position.col 
-    while (rowCtr < boardSize - 1 && colCtr < boardSize - 1){
-        if (newState[rowCtr+1][colCtr+1].characterColor && newState[rowCtr+1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr+1) break
-        newState[++rowCtr][++colCtr].validMove = true
-        if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+    if (!disableUpToBottomRightMove){
+        // bottom-right
+        rowCtr = position.row
+        colCtr = position.col 
+        while (rowCtr < boardSize - 1 && colCtr < boardSize - 1){
+            if (newState[rowCtr+1][colCtr+1].characterColor && newState[rowCtr+1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr+1) break
+            newState[++rowCtr][++colCtr].validMove = true
+            if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
+        }
     }
 
     return newState
@@ -213,53 +226,67 @@ const rookMovement = (position, state) => {
         }
     } 
 
-    // to up
-    for (let row = position.row; row >= 0; row--){
-        if (row == position.row) continue
-        newState[row][position.col].validMove = true
-        if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
-            break
-        } else if (newState[row][position.col].characterColor){
-            newState[row][position.col].validMove = false
-            break
-        } 
-    }
+   
+    var disableHorizontalMove = validateDisableHorizontalMovement(boardSize, position, newState)
+    var disableVerticalMove = validateDisableVerticalMovement(boardSize, position, newState)
+    
 
-    // to down
-    for (let row = position.row; row < boardSize; row++){
-        if (row == position.row) continue
-        newState[row][position.col].validMove = true
-        if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
-            break
-        } else if (newState[row][position.col].characterColor){
-            newState[row][position.col].validMove = false
-            break
+    // check if there's any horizontal attacker
+
+    if (!disableVerticalMove){
+        // to up
+        for (let row = position.row; row >= 0; row--){
+            if (row == position.row) continue
+            newState[row][position.col].validMove = true
+            if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
+                break
+            } else if (newState[row][position.col].characterColor){
+                newState[row][position.col].validMove = false
+                break
+            } 
+        }
+
+        // to down
+        for (let row = position.row; row < boardSize; row++){
+            if (row == position.row) continue
+            newState[row][position.col].validMove = true
+            if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
+                break
+            } else if (newState[row][position.col].characterColor){
+                newState[row][position.col].validMove = false
+                break
+            }
         }
     }
 
-    // to left
-    for (let col = position.col; col >= 0; col--){
-        if (col == position.col) continue
-        newState[position.row][col].validMove = true
-        if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
-            break
-        } else if (newState[position.row][col].characterColor){
-            newState[position.row][col].validMove = false
-            break
-        } 
+
+    if (!disableHorizontalMove){
+        // to left  
+        for (let col = position.col; col >= 0; col--){
+            if (col == position.col) continue
+            newState[position.row][col].validMove = true
+            if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
+                break
+            } else if (newState[position.row][col].characterColor){
+                newState[position.row][col].validMove = false
+                break
+            } 
+        }
+
+        // to right
+        for (let col = position.col; col < boardSize; col++){
+            if (col == position.col) continue
+            newState[position.row][col].validMove = true
+            if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
+                break
+            } else if (newState[position.row][col].characterColor){
+                newState[position.row][col].validMove = false
+                break
+            } 
+        }
     }
 
-    // to right
-    for (let col = position.col; col < boardSize; col++){
-        if (col == position.col) continue
-        newState[position.row][col].validMove = true
-        if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
-            break
-        } else if (newState[position.row][col].characterColor){
-            newState[position.row][col].validMove = false
-            break
-        } 
-    }
+
 
     return newState
 }
@@ -326,8 +353,6 @@ const pawnKillMovementValidator = (characterPosition, clickablePosition, status)
 const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
     // only trigger on kingMovement function
     const boardSize = state.length
-
-    console.log(kingColor)
 
     // give ineligible for king flag for each square if under attack
     var newState = state.map(row => row.slice());
@@ -601,6 +626,283 @@ const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
 }
 
 
+const validateDisableHorizontalMovement = (boardSize, position, newState) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_ROOK, 
+        constants.CHARACTER_ROOK.toUpperCase(), 
+    ]
+
+
+    
+    // check if there's any vertical attacker to disable horizontal movement
+    // check if king is same column
+
+
+    // pass boardSize, col, newState, posibleAttackers 
+    for (let row = 0; row < boardSize; row++){ // vertical
+        if (newState[row][position.col].characterColor){
+
+            var node = new Node({
+                character : newState[row][position.col].character,
+                characterColor : newState[row][position.col].characterColor, 
+                row, 
+                col : position.col
+            })
+            charLineList.append(node)
+            if (
+                (newState[row][position.col].character == constants.CHARACTER_KING || newState[row][position.col].character == constants.CHARACTER_KING.toUpperCase()) 
+                && position.characterColor == newState[row][position.col].characterColor){
+                kingNode = node
+            }
+        }
+    }  
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge
+            if (kingNode.next && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && kingNode.prev.data.row == position.row){
+                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        } else { // in between
+            if (kingNode.next && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+            if (kingNode.prev && kingNode.prev.data.row == position.row){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        }
+    
+    }
+
+    return false
+}
+
+const validateDisableVerticalMovement = (boardSize, position, newState) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_ROOK, 
+        constants.CHARACTER_ROOK.toUpperCase(), 
+    ]
+
+
+    
+    // check if there's any vertical attacker to disable horizontal movement
+    // check if king is same column
+
+
+    // pass boardSize, col, newState, posibleAttackers 
+    for (let col = 0; col < boardSize; col++){ // vertical
+        if (newState[position.row][col].characterColor){
+
+            var node = new Node({
+                character : newState[position.row][col].character,
+                characterColor : newState[position.row][col].characterColor, 
+                row : position.row,
+                col
+            })
+            charLineList.append(node)
+            if (
+                (newState[position.row][col].character == constants.CHARACTER_KING || newState[position.row][col].character == constants.CHARACTER_KING.toUpperCase()) 
+                && position.characterColor == newState[position.row][col].characterColor){
+                kingNode = node
+            }
+        }
+    }  
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && kingNode.next.data.col == position.col){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && kingNode.prev.data.col == position.col){
+                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        } else { // in between
+            if (kingNode.next && kingNode.next.data.col == position.col){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+            if (kingNode.prev && kingNode.prev.data.col == position.col){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        }
+    
+    }
+
+    return false
+}
+
+const validateDisableBottomToUpRightDiagonalMovement = (boardSize, position, newState) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_BISHOP, 
+        constants.CHARACTER_BISHOP.toUpperCase(), 
+    ] 
+
+    var tempRow = position.row 
+    var tempCol = position.col 
+
+    // make the start point at top left
+    while (tempCol > 0 && tempRow > 0){
+        tempRow--
+        tempCol--
+    }
+
+    // go to bottom right
+    while (tempRow < boardSize && tempCol < boardSize){
+        if (newState[tempRow][tempCol].characterColor){
+
+            var node = new Node({
+                character : newState[tempRow][tempCol].character,
+                characterColor : newState[tempRow][tempCol].characterColor, 
+                row : tempRow,
+                col : tempCol
+            })
+            charLineList.append(node)
+            if (
+                (newState[tempRow][tempCol].character == constants.CHARACTER_KING || newState[tempRow][tempCol].character == constants.CHARACTER_KING.toUpperCase()) 
+                && position.characterColor == newState[tempRow][tempCol].characterColor){
+                kingNode = node
+            }
+        } 
+        tempRow++
+        tempCol++
+    } 
+    console.log(kingNode)
+    console.log(charLineList)
+
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        } else { // in between
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        }
+    
+    }
+    return false
+}
+
+const validateDisableDownToRightDiagonalMovement = (boardSize, position, newState) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_BISHOP, 
+        constants.CHARACTER_BISHOP.toUpperCase(), 
+    ] 
+
+    var tempRow = position.row 
+    var tempCol = position.col 
+
+    // make the start point at bottom left
+    while (tempCol > 0 && tempRow < boardSize - 1){
+        tempRow++
+        tempCol--
+    }
+
+    // go to top right
+    while (tempRow > 0 && tempCol < boardSize){
+        if (newState[tempRow][tempCol].characterColor){
+
+            var node = new Node({
+                character : newState[tempRow][tempCol].character,
+                characterColor : newState[tempRow][tempCol].characterColor, 
+                row : tempRow,
+                col : tempCol
+            })
+            charLineList.append(node)
+            if (
+                (newState[tempRow][tempCol].character == constants.CHARACTER_KING || newState[tempRow][tempCol].character == constants.CHARACTER_KING.toUpperCase()) 
+                && position.characterColor == newState[tempRow][tempCol].characterColor){
+                kingNode = node
+            }
+        } 
+        tempRow--
+        tempCol++
+    } 
+    console.log(kingNode)
+    console.log(charLineList)
+
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        } else { // in between
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                    return true
+                }
+            }
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                    return true
+                }
+            }
+        }
+    
+    }
+    return false
+}
 
 export {
     noMovement,
