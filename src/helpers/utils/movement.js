@@ -48,10 +48,16 @@ const knightMovement = (position, state) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
+
+    var disableMovement = validateDisableHorizontalMovement(boardSize, position, newState) 
+    || validateDisableVerticalMovement(boardSize, position, newState)
+    || validateDisableBottomToUpRightDiagonalMovement(boardSize, position, newState)
+    || validateDisableDownToRightDiagonalMovement(boardSize, position, newState)
+
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (knightShapeMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+            if (!disableMovement && knightShapeMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
                 newState[row][col].validMove = true
             }
         }
@@ -76,13 +82,8 @@ const queenMovement = (position, state) => {
     var disableBottomToUpRightMove = validateDisableBottomToUpRightDiagonalMovement(boardSize, position, newState)
     var disableUpToBottomRightMove = validateDisableDownToRightDiagonalMovement(boardSize, position, newState)
 
-    // console.log(disableHorizontalMove, disableVerticalMove, disableBottomToUpRightMove, disableUpToBottomRightMove)
-    
-
-
     // check if there's any horizontal attacker
-
-    if (disableVerticalMove){
+    if (!disableHorizontalMove && !disableUpToBottomRightMove && !disableBottomToUpRightMove){
             // to left  
             for (let col = position.col; col >= 0; col--){
                 if (col == position.col) continue
@@ -110,7 +111,7 @@ const queenMovement = (position, state) => {
     }
 
 
-    if (disableHorizontalMove){
+    if (!disableVerticalMove && !disableUpToBottomRightMove && !disableBottomToUpRightMove){
         // to up
         for (let row = position.row; row >= 0; row--){
             if (row == position.row) continue
@@ -138,7 +139,7 @@ const queenMovement = (position, state) => {
 
  
     // top-left 
-    if (disableBottomToUpRightMove){
+    if (!disableUpToBottomRightMove && !disableHorizontalMove && !disableVerticalMove){
         var rowCtr = position.row
         var colCtr = position.col 
         while (rowCtr > 0 && colCtr > 0){
@@ -149,7 +150,7 @@ const queenMovement = (position, state) => {
     }
     
     // top-right 
-    if (disableUpToBottomRightMove){
+    if (!disableBottomToUpRightMove && !disableHorizontalMove && !disableVerticalMove){
         rowCtr = position.row
         colCtr = position.col 
         while (rowCtr > 0 && colCtr < boardSize - 1){
@@ -161,7 +162,7 @@ const queenMovement = (position, state) => {
 
 
     // bottom-left 
-    if (disableUpToBottomRightMove){
+    if (!disableBottomToUpRightMove && !disableHorizontalMove && !disableVerticalMove){
         rowCtr = position.row
         colCtr = position.col 
         while (rowCtr < boardSize - 1 && colCtr > 0){
@@ -171,7 +172,7 @@ const queenMovement = (position, state) => {
         }
     }
     
-    if (disableBottomToUpRightMove){
+    if (!disableUpToBottomRightMove && !disableHorizontalMove && !disableVerticalMove){
         // bottom-right
         rowCtr = position.row
         colCtr = position.col 
@@ -694,26 +695,26 @@ const validateDisableHorizontalMovement = (boardSize, position, newState) => {
         }
     }  
     if (kingNode){
-        if (!kingNode.prev){ // king is on left-side edge
-            if (kingNode.next && kingNode.next.data.row == position.row){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
         }  else if (!kingNode.next){ // king is on right-side edge
-            if (kingNode.prev && kingNode.prev.data.row == position.row){
-                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }
         } else { // in between
-            if (kingNode.next && kingNode.next.data.row == position.row){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
-            if (kingNode.prev && kingNode.prev.data.row == position.row){
-                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }
@@ -761,25 +762,25 @@ const validateDisableVerticalMovement = (boardSize, position, newState) => {
     }  
     if (kingNode){
         if (!kingNode.prev){ // king is on left-side edge 
-            if (kingNode.next && kingNode.next.data.col == position.col){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
         }  else if (!kingNode.next){ // king is on right-side edge
-            if (kingNode.prev && kingNode.prev.data.col == position.col){
-                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }
         } else { // in between
-            if (kingNode.next && kingNode.next.data.col == position.col){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+            if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
-            if (kingNode.prev && kingNode.prev.data.col == position.col){
-                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+            if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }
@@ -834,24 +835,24 @@ const validateDisableBottomToUpRightDiagonalMovement = (boardSize, position, new
     if (kingNode){
         if (!kingNode.prev){ // king is on left-side edge 
             if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
         }  else if (!kingNode.next){ // king is on right-side edge
             if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
-                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }
         } else { // in between
             if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
             if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
-                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }
@@ -901,30 +902,28 @@ const validateDisableDownToRightDiagonalMovement = (boardSize, position, newStat
         tempRow--
         tempCol++
     } 
-    console.log(kingNode)
-    console.log(charLineList)
 
     if (kingNode){
         if (!kingNode.prev){ // king is on left-side edge 
             if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
         }  else if (!kingNode.next){ // king is on right-side edge
             if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
-                if (Boolean(kingNode.prev.prev) && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }
         } else { // in between
             if (kingNode.next && kingNode.next.data.col == position.col && kingNode.next.data.row == position.row){
-                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character)){
+                if (kingNode.next.next && possibleAttackers.includes(kingNode.next.next.data.character) && kingNode.data.characterColor != kingNode.next.next.data.characterColor){
                     return true
                 }
             }
             if (kingNode.prev && kingNode.prev.data.col == position.col && kingNode.prev.data.row == position.row){
-                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character)){
+                if (kingNode.prev.prev && possibleAttackers.includes(kingNode.prev.prev.data.character) && kingNode.data.characterColor != kingNode.prev.prev.data.characterColor){
                     return true
                 }
             }

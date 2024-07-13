@@ -80,7 +80,6 @@ export default function Play({userData, serverFailure = false, token = ""}) {
   // });
 
   const handleSubmit = async (e) => { 
-    console.log(formData)
     e.preventDefault();
 
     try {

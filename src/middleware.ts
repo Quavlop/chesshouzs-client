@@ -34,7 +34,6 @@ export default async function middleware(req : NextRequest, res : NextResponse){
         });
 
         const premiumVerificationParsedResponse = await premiumVerificationResponse.json();
-        console.log(premiumVerificationParsedResponse, 'ww');
 
         // premium middleware (prevent premium user from buying twice)
         if (path.match(/^(\/premium(\/{1}\w+)*)$/)){

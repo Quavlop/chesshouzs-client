@@ -61,7 +61,6 @@ export default function Home({userData, serverFailure = false}) {
   const resendEmailVerificationLink = async (e) => {
     e.preventDefault();
     setResendLoading(true);
-    console.log('a', API_URL);
 
     try {
       const response = await fetch(API_URL + '/auth/verify-email/resend', {
@@ -139,7 +138,6 @@ export default function Home({userData, serverFailure = false}) {
   }, []);  
 
 
-  useEffect(() => {console.log(user)}, [user])
 
   return (
       serverFailure 

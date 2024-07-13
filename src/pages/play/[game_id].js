@@ -156,8 +156,6 @@ export default function PlayOnline({userData, serverFailure = false, state}) {
   }, []);
 
   useEffect(() => {
-    console.log("HAERIN")
-    console.log(gameState)
   }, [gameState])
 
   return (
@@ -205,7 +203,7 @@ export async function getServerSideProps(context){
         } 
 
         // validate if player black then transform the stub
-        const stateStub = "............|............|............|............|......B.Q.Q.|.......qqn..|Qq......kr.Q|........r...|......q...b.|.....B...b.B|........R...|............"
+        const stateStub = "............|............|............|........Q...|......B...q.|.......qqP..|...QQq..k.rQ|............|......q.q.b.|.....b...b.B|....P...R...|............"
         const stateRows = stateStub.split("|")
 
         const state = Array(12).fill(null).map((_, row) =>
