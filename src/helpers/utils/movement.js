@@ -18,10 +18,16 @@ const pawnMovement = (position, state) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
+    
+    var disableMovement = validateDisableHorizontalMovement(boardSize, position, newState) 
+    || validateDisableVerticalMovement(boardSize, position, newState)
+    || validateDisableBottomToUpRightDiagonalMovement(boardSize, position, newState)
+    || validateDisableDownToRightDiagonalMovement(boardSize, position, newState)
+
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if ((pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState) || pawnKillMovementValidator(position, {row, col}, newState[row][col])) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+            if (!disableMovement && (pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState) || pawnKillMovementValidator(position, {row, col}, newState[row][col])) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
                 newState[row][col].validMove = true
             }
         }

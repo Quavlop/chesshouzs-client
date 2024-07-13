@@ -2,7 +2,7 @@ import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, 
 import {boardCellColorHandler, handleMovement} from "@/helpers/utils/game"
 
 
-const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler}) => {
+const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler}) => {
   const boardSize = 12;
   const squares = [];
 
@@ -19,12 +19,30 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         justifyContent={"center"}
         alignItems={"center"}
         onClick={() => clickCoordinateHandler({row, col}, () => {
-            const newState = handleMovement(state[row][col]?.character, {
+            var newState = state.map(row => row.slice());
+            if (newState[row][col].validMove){
+                  newState[row][col] = {
+                      character : prevClickedChar.character, 
+                      characterColor : prevClickedChar.characterColor,
+                      inDefaultPosition : false, 
+                      image : prevClickedChar.image, 
+                      color : prevClickedChar.color
+                  }
+                  newState[prevClickedChar.row][prevClickedChar.col] = {
+                    character : ".", 
+                    characterColor : false,
+                    inDefaultPosition : null, 
+                    image : null, 
+                    color : (prevClickedChar.row + prevClickedChar.col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9',
+                  }
+              }
+            newState = handleMovement(newState[row][col]?.character, {
               row, col, 
-              character : state[row][col]?.character, 
-              characterColor : state[row][col]?.characterColor,
-            }, state)
+              character : newState[row][col]?.character, 
+              characterColor : newState[row][col]?.characterColor,
+            }, newState)
             if (!newState) return
+            setPrevClickedCharHandler({...newState[row][col], row, col})
             setGameStateHandler(newState)
         })}
         pb="100%" // Padding bottom to maintain square aspect ratio

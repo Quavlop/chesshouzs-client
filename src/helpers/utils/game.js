@@ -1,7 +1,17 @@
 import constants from "@/config/constants/game"
 import { kingMovement, pawnMovement, bishopMovement, queenMovement, knightMovement, rookMovement, noMovement } from "./movement"
 
-const writeGameNotation = (notation) => {
+const generateNewNotationState = (state) => {
+    var notation = ""
+    const boardSize = state.length
+
+    for (let row = 0; row < boardSize; row++) {
+        for (let col = 0; col < boardSize; col++) {
+            notation += state[row][col].character 
+        }
+        notation += "|"
+    } 
+
     return notation
 }
 
@@ -13,7 +23,7 @@ const handleMovement = (piece, position, state) => {
         pieceChar = piece.toLowerCase()
     }
     const handler = movement.get(pieceChar) 
-    return handler(position, state)
+    return handler({...position, pieceChar}, state)
 }
 
 
@@ -54,7 +64,7 @@ const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
 
 
 export {
-    writeGameNotation,
+    generateNewNotationState,
     handleMovement,
     getPieceMovementAlgorithm,
     transformBoard, 

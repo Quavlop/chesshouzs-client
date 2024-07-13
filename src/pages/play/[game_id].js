@@ -41,6 +41,7 @@ export default function PlayOnline({userData, serverFailure = false, state}) {
   const [resendVerificationLinkResponse, setResendVerificationLinkResponse] = useState(null);    
 
   const [gameState, setGameState] = useState(state)
+  const [prevClickedChar, setPrevClickedChar] = useState({})
 
   // object of row and col
   const [clickCoordinate, setClickCoordinate] = useState({
@@ -48,17 +49,20 @@ export default function PlayOnline({userData, serverFailure = false, state}) {
       col : null
   })
 
-  const clickCoordinateHandler = (coordinate, fn) => {
+  const clickCoordinateHandler = (coordinate, coordinateHandlerCallback) => {
       setClickCoordinate({
         row : coordinate.row, 
         col : coordinate.col
       })
-      
-      fn()
+      coordinateHandlerCallback()
   } 
 
   const setGameStateHandler = (newState) => { 
       setGameState(newState)
+  }
+
+  const setPrevClickedCharHandler = (char) => {
+      setPrevClickedChar(char)
   }
 
 
@@ -169,7 +173,14 @@ export default function PlayOnline({userData, serverFailure = false, state}) {
 
           <Flex w="100vw" h="100vh">
             <Flex width="70%" height="auto" justifyContent={"center"} flexDirection={"row"} margin="auto">
-              <GameBoard state={gameState} setGameStateHandler={setGameStateHandler} clickCoordinate={clickCoordinate} clickCoordinateHandler={clickCoordinateHandler}/>
+              <GameBoard 
+                state={gameState} 
+                setGameStateHandler={setGameStateHandler} 
+                clickCoordinate={clickCoordinate} 
+                clickCoordinateHandler={clickCoordinateHandler} 
+                prevClickedChar={prevClickedChar}
+                setPrevClickedCharHandler={setPrevClickedCharHandler}
+              />
               <GamePanel/>
             </Flex>
           </Flex>
@@ -203,7 +214,7 @@ export async function getServerSideProps(context){
         } 
 
         // validate if player black then transform the stub
-        const stateStub = "............|............|............|........Q...|......B...q.|.......qqP..|...QQq..k.rQ|............|......q.q.b.|.....b...b.B|....P...R...|............"
+        const stateStub = "............|............|....k.......|....pp......|............|.......Q....|............|............|............|............|............|............"
         const stateRows = stateStub.split("|")
 
         const state = Array(12).fill(null).map((_, row) =>
