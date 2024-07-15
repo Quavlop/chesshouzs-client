@@ -651,7 +651,7 @@ const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
                     return true
                 } 
             } else if (newState[row][col].character == constants.CHARACTER_KNIGHT || newState[row][col].character == constants.CHARACTER_KNIGHT.toUpperCase()){
-                if (!knightShapeMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) && !diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                if (!knightShapeMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
                     continue
                 }
                 return true
@@ -939,7 +939,294 @@ const validateDisableDownToRightDiagonalMovement = (boardSize, position, newStat
     return false
 }
 
+
+const checkKingVerticalAttacker = (boardSize, kingPosition, newState, player) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_ROOK, 
+        constants.CHARACTER_ROOK.toUpperCase(), 
+    ]
+
+    var invalidKingMoves = new Map()
+
+    for (let row = 0; row < boardSize; row++){ // vertical
+        if (newState[row][kingPosition.col].characterColor){
+
+            var node = new Node({
+                character : newState[row][kingPosition.col].character,
+                characterColor : newState[row][kingPosition.col].characterColor, 
+                row, 
+                col : kingPosition.col
+            })
+            charLineList.append(node)
+            if (
+                (newState[row][kingPosition.col].character == constants.CHARACTER_KING || newState[row][kingPosition.col].character == constants.CHARACTER_KING.toUpperCase()) 
+                && player.color == newState[row][kingPosition.col].characterColor){
+                kingNode = node
+            }
+        }
+        invalidKingMoves.set({row, col : kingPosition.col}, true)
+    }   
+
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        } else { // in between
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        }
+    
+    }
+
+    return new Map()
+}
+
+const checkKingHorizontalAttacker = (boardSize, kingPosition, newState, player) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_ROOK, 
+        constants.CHARACTER_ROOK.toUpperCase(), 
+    ]
+
+    var invalidKingMoves = new Map()
+    // pass boardSize, col, newState, posibleAttackers 
+    for (let col = 0; col < boardSize; col++){ // vertical
+        if (newState[kingPosition.row][col].characterColor){
+
+            var node = new Node({
+                character : newState[kingPosition.row][col].character,
+                characterColor : newState[kingPosition.row][col].characterColor, 
+                row : kingPosition.row,
+                col
+            })
+            charLineList.append(node)
+            if (
+                (newState[kingPosition.row][col].character == constants.CHARACTER_KING || newState[kingPosition.row][col].character == constants.CHARACTER_KING.toUpperCase()) 
+                && player.color == newState[kingPosition.row][col].characterColor){
+                kingNode = node
+            }
+        }
+        invalidKingMoves.set({row : kingPosition.row, col}, true)
+    }  
+    // console.log(charLineList)
+    // console.log(kingNode)
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        } else { // in between
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        }
+    }
+    return new Map()
+}
+
+
+const  checkKingDownToBottomRightDiagonalAttacker = (boardSize, kingPosition, newState, player) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_BISHOP, 
+        constants.CHARACTER_BISHOP.toUpperCase(), 
+    ] 
+
+    var tempRow = kingPosition.row 
+    var tempCol = kingPosition.col 
+
+    // make the start point at top left
+    while (tempCol > 0 && tempRow > 0){
+        tempRow--
+        tempCol--
+    }
+
+    var invalidKingMoves = new Map()
+
+    // go to bottom right
+    while (tempRow < boardSize && tempCol < boardSize){
+        if (newState[tempRow][tempCol].characterColor){
+
+            var node = new Node({
+                character : newState[tempRow][tempCol].character,
+                characterColor : newState[tempRow][tempCol].characterColor, 
+                row : tempRow,
+                col : tempCol
+            })
+            charLineList.append(node)
+            if (
+                (newState[tempRow][tempCol].character == constants.CHARACTER_KING || newState[tempRow][tempCol].character == constants.CHARACTER_KING.toUpperCase()) 
+                && player.color == newState[tempRow][tempCol].characterColor){
+                kingNode = node
+            }
+        } 
+        invalidKingMoves.set({row : tempRow, col : tempCol}, true)
+        tempRow++
+        tempCol++
+    } 
+
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        } else { // in between
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        }
+    }
+    return new Map()
+}
+
+
+const checkKingBottomToUpRightDiagonalAttacker = (boardSize, kingPosition, newState, player) => {
+    var charLineList = new LinkedList()
+    var kingNode = null
+
+    var possibleAttackers = [
+        constants.CHARACTER_QUEEN, 
+        constants.CHARACTER_QUEEN.toUpperCase(), 
+        constants.CHARACTER_BISHOP, 
+        constants.CHARACTER_BISHOP.toUpperCase(), 
+    ] 
+
+    var tempRow = kingPosition.row 
+    var tempCol = kingPosition.col 
+
+    // make the start point at bottom left
+    while (tempCol > 0 && tempRow < boardSize - 1){
+        tempRow++
+        tempCol--
+    }
+
+
+    var invalidKingMoves = new Map()
+    // go to top right
+    while (tempRow > 0 && tempCol < boardSize){
+        if (newState[tempRow][tempCol].characterColor){
+
+            var node = new Node({
+                character : newState[tempRow][tempCol].character,
+                characterColor : newState[tempRow][tempCol].characterColor, 
+                row : tempRow,
+                col : tempCol
+            })
+            charLineList.append(node)
+            if (
+                (newState[tempRow][tempCol].character == constants.CHARACTER_KING || newState[tempRow][tempCol].character == constants.CHARACTER_KING.toUpperCase()) 
+                && player.color == newState[tempRow][tempCol].characterColor){
+                kingNode = node
+            }
+        } 
+        invalidKingMoves.set({row : tempRow, col : tempCol}, true)
+        tempRow--
+        tempCol++
+    } 
+
+    if (kingNode){
+        if (!kingNode.prev){ // king is on left-side edge 
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+        }  else if (!kingNode.next){ // king is on right-side edge
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        } else { // in between
+            if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
+                return invalidKingMoves
+            }
+            if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
+                return invalidKingMoves
+            }
+        }
+    }
+    return new Map()
+}
+
+
+const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
+    const knightAttackList = [
+        (row, col) => ({row : row + 2, col : col + 1}), 
+        (row, col) => ({row : row + 2, col : col - 1}), 
+        (row, col) => ({row : row - 2, col : col + 1}), 
+        (row, col) => ({row : row - 2, col : col - 1}), 
+        (row, col) => ({row : row + 1, col : col + 2}), 
+        (row, col) => ({row : row + 1, col : col - 2}), 
+        (row, col) => ({row : row - 1, col : col + 2}), 
+        (row, col) => ({row : row - 1, col : col - 2})
+    ]
+
+    var knightAttackerPositions = []
+    var invalidKingMoves = new Map()
+    
+    for (let fn of knightAttackList){
+        const square = fn(kingPosition.row, kingPosition.col) 
+        const { row, col } = square 
+        if (row < 0 || col < 0 || row >= boardSize || col >= boardSize){
+            continue
+        } 
+        if ((newState[row][col].character == constants.CHARACTER_KNIGHT || newState[row][col].character == constants.CHARACTER_KNIGHT.toUpperCase()) && newState[row][col].characterColor != player.color){
+            knightAttackerPositions.push({row, col})
+        }
+    } 
+
+    for (let knight of knightAttackerPositions){
+        for (let fn of knightAttackList){
+            const square = fn(knight.row, knight.col) 
+            const { row, col } = square 
+            if (row < 0 || col < 0 || row >= boardSize || col >= boardSize){
+                continue
+            } 
+            invalidKingMoves.set({row, col}, true)
+        } 
+    }
+    return invalidKingMoves
+}
+
 export {
+    checkKingHorizontalAttacker, 
+    checkKingVerticalAttacker, 
+    checkKingBottomToUpRightDiagonalAttacker,
+    checkKingDownToBottomRightDiagonalAttacker,
+    checkKnightAttacker,
     noMovement,
     pawnMovement,
     kingMovement,  

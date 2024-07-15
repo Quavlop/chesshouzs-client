@@ -21,7 +21,7 @@ import constants from "@/config/constants/game"
 
 
 
-export default function PlayOnline({userData, serverFailure = false, state}) {
+export default function PlayOnline({userData, serverFailure = false, state, color, kingData}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -42,6 +42,12 @@ export default function PlayOnline({userData, serverFailure = false, state}) {
 
   const [gameState, setGameState] = useState(state)
   const [prevClickedChar, setPrevClickedChar] = useState({})
+  const [myTurn, setMyTurn] = useState(true)
+  const [isInCheck, setIsInCheck] = useState(false)
+
+  const [playerGameStatus, setPlayerGameStatus] = useState({
+    color, kingPosition : kingData
+  })
 
   // object of row and col
   const [clickCoordinate, setClickCoordinate] = useState({
@@ -63,6 +69,18 @@ export default function PlayOnline({userData, serverFailure = false, state}) {
 
   const setPrevClickedCharHandler = (char) => {
       setPrevClickedChar(char)
+  }
+
+  const setMyTurnHandler = (bool) => {
+    setMyTurn(bool)
+  }
+
+  const setIsInCheckHandler = (bool) => {
+    setIsInCheck(bool)
+  } 
+
+  const setPlayerGameStatusHandler = (status) => {
+    setPlayerGameStatus(status)
   }
 
 
@@ -180,6 +198,12 @@ export default function PlayOnline({userData, serverFailure = false, state}) {
                 clickCoordinateHandler={clickCoordinateHandler} 
                 prevClickedChar={prevClickedChar}
                 setPrevClickedCharHandler={setPrevClickedCharHandler}
+                myTurn={myTurn}
+                setMyTurnHandler={setMyTurnHandler}
+                isInCheck={isInCheck}
+                setIsInCheckHandler={setIsInCheckHandler}
+                playerGameStatus={playerGameStatus}
+                setPlayerGameStatusHandler={setPlayerGameStatusHandler}
               />
               <GamePanel/>
             </Flex>
@@ -196,7 +220,8 @@ export async function getServerSideProps(context){
   const config = getConfig();
   const { publicRuntimeConfig } = config;
   const { API_URL, ENVIRONMENT } = publicRuntimeConfig;     
-
+  var playerColorStub = "WHITE"
+  var kingData = null
 
   try {
       const response = await isAuthenticated(`${API_URL}`, req.cookies?.__SESS_TOKEN, true, game_id);
@@ -214,17 +239,28 @@ export async function getServerSideProps(context){
         } 
 
         // validate if player black then transform the stub
-        const stateStub = "............|............|....k.......|....pp......|............|.......Q....|............|............|............|............|............|............"
+        const stateStub = ".........n.....|...............|....k......KP.q|...............|...Q...........|...............|...............|...............|...............|...............|...............|...............|...............|...............|..............."
         const stateRows = stateStub.split("|")
 
-        const state = Array(12).fill(null).map((_, row) =>
-            Array(12).fill(null).map((_, col) => ({
-              character : stateRows[row][col] || ".", 
-              characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
-              inDefaultPosition : true,
-              image : "",
-              color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
-            }))
+
+        const state = Array(15).fill(null).map((_, row) =>
+            Array(15).fill(null).map((_, col) => {
+              var cellData = {
+                character : stateRows[row][col] || ".", 
+                characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
+                inDefaultPosition : true,
+                image : "",
+                color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
+              }
+              if ((stateRows[row][col] == constants.CHARACTER_KING || stateRows[row][col] == constants.CHARACTER_KING.toUpperCase()) && cellData.characterColor == playerColorStub){
+                kingData = {
+                  inDefaultPosition : cellData.inDefaultPosition, 
+                  row, col 
+                }
+              }
+
+              return cellData
+            })
         ) 
                  
 
@@ -232,7 +268,9 @@ export async function getServerSideProps(context){
           props : {
             serverFailure : false, 
             userData : response.user,
-            state : state
+            state : state, 
+            color : playerColorStub, 
+            kingData,
           }
         }
       }

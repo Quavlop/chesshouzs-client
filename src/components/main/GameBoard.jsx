@@ -1,9 +1,10 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image } from '@chakra-ui/react';
-import {boardCellColorHandler, handleMovement} from "@/helpers/utils/game"
+import {boardCellColorHandler, handleMovement, isKingInCheck} from "@/helpers/utils/game"
+import constants from '@/config/constants/game';
 
 
-const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler}) => {
-  const boardSize = 12;
+const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler}) => {
+  const boardSize = 15;
   const squares = [];
 
   for (let row = 0; row < boardSize; row++) {
@@ -19,6 +20,9 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         justifyContent={"center"}
         alignItems={"center"}
         onClick={() => clickCoordinateHandler({row, col}, () => {
+            if (!myTurn){
+              return
+            }
             var newState = state.map(row => row.slice());
             if (newState[row][col].validMove){
                   newState[row][col] = {
@@ -43,7 +47,18 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             }, newState)
             if (!newState) return
             setPrevClickedCharHandler({...newState[row][col], row, col})
-            setGameStateHandler(newState)
+            var isPlayerKingInCheck = isKingInCheck(playerGameStatus.kingPosition ,newState,playerGameStatus)
+            if (isPlayerKingInCheck){
+              setIsInCheckHandler(true)
+              console.log("CHECKKK")
+            }
+            if ((newState[row][col]?.character == constants.CHARACTER_KING || newState[row][col]?.character == constants.CHARACTER_KING.toUpperCase()) && newState[row][col]?.characterColor == playerGameStatus.color){
+              setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
+                ...playerGameStatus.kingPosition, row, col
+              }})
+            }
+            setGameStateHandler(newState)          
+
         })}
         pb="100%" // Padding bottom to maintain square aspect ratio
         >
@@ -70,11 +85,11 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 export default  function Board(props){
 
   return <Grid
-  templateColumns="repeat(12, 1fr)"
+  templateColumns="repeat(15, 1fr)"
   gap={0}
   w="100%"
-  maxH="800px"
-  maxW="800px"
+  maxH="1000px"
+  maxW="1000px"
   mx="auto"
   p={0}
   border={"2px solid #B7C0D8"}

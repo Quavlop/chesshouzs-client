@@ -31,7 +31,7 @@ export default function Loading({message}){
             w='100%'
             h='350px'
             maxW='500px'
-            zIndex={12}        
+            zIndex={14}        
         >
             <Spinner color={secondaryColor} thickness='10px' speed='0.8s' w={'150px'} h={'150px'} size="xl" />
             <Heading mt='25px' color='white' fontWeight={'bold'}>{message}</Heading>

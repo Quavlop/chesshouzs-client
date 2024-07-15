@@ -1,5 +1,19 @@
 import constants from "@/config/constants/game"
-import { kingMovement, pawnMovement, bishopMovement, queenMovement, knightMovement, rookMovement, noMovement } from "./movement"
+import { 
+    kingMovement, 
+    pawnMovement, 
+    bishopMovement, 
+    queenMovement, 
+    knightMovement, 
+    rookMovement,
+    noMovement,
+    checkKingHorizontalAttacker, 
+    checkKingVerticalAttacker, 
+    checkKingBottomToUpRightDiagonalAttacker,
+    checkKingDownToBottomRightDiagonalAttacker,
+    checkKnightAttacker
+} from "./movement"
+import { mergeMaps } from "./util"
 
 const generateNewNotationState = (state) => {
     var notation = ""
@@ -57,6 +71,17 @@ const transformBoard = (state) => {
     return newState
 }
 
+const isKingInCheck = (kingPosition, state, player) => {    
+    const invalidHorizontalMoves = checkKingHorizontalAttacker(15, kingPosition, state, player)
+    const invalidVerticalMoves = checkKingVerticalAttacker(15, kingPosition, state, player)
+    const invalidBottomToUpRightDiagonalMoves = checkKingBottomToUpRightDiagonalAttacker(15, kingPosition, state, player)
+    const invalidUpToDownRightDiagonalMoves = checkKingDownToBottomRightDiagonalAttacker(15, kingPosition, state, player)
+    const invalidMovesCausedByKnight = checkKnightAttacker(15, kingPosition, state, player)
+
+    const invalidMoves = mergeMaps(invalidHorizontalMoves, invalidVerticalMoves, invalidBottomToUpRightDiagonalMoves, invalidUpToDownRightDiagonalMoves, invalidMovesCausedByKnight)
+    return invalidMoves.size > 0
+}
+
 const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
    if (target.movable) return "yellow"
    return clickCoordinate.row == target.row && clickCoordinate.col == target.col ? "red" : defaultColor
@@ -64,6 +89,7 @@ const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
 
 
 export {
+    isKingInCheck,
     generateNewNotationState,
     handleMovement,
     getPieceMovementAlgorithm,
