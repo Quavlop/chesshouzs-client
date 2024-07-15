@@ -1196,7 +1196,7 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
 
     var knightAttackerPositions = []
     var invalidKingMoves = new Map()
-    
+
     for (let fn of knightAttackList){
         const square = fn(kingPosition.row, kingPosition.col) 
         const { row, col } = square 
@@ -1219,6 +1219,20 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
         } 
     }
     return invalidKingMoves
+} 
+
+const checkPawnAttackers = (boardSize, kingPosition, newState, player) => {
+    var invalidKingMoves = new Map()
+    for (let row = 0; row < boardSize; row++){
+        for (let col = 0; col < boardSize; col++) {
+            if (newState[row][col].character == constants.CHARACTER_PAWN || newState[row][col].character == constants.CHARACTER_PAWN.toUpperCase()){
+                if (pawnKillMovementValidator({row, col, characterColor : player.color == "BLACK" ? "WHITE" : "BLACK"}, {row : kingPosition.row, col : kingPosition.col}, newState)){
+                    invalidKingMoves.set({row, col}, true)
+                }
+            }
+        }
+    }
+    return invalidKingMoves
 }
 
 export {
@@ -1227,6 +1241,7 @@ export {
     checkKingBottomToUpRightDiagonalAttacker,
     checkKingDownToBottomRightDiagonalAttacker,
     checkKnightAttacker,
+    checkPawnAttackers,
     noMovement,
     pawnMovement,
     kingMovement,  

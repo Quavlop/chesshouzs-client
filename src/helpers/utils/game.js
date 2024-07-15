@@ -11,7 +11,8 @@ import {
     checkKingVerticalAttacker, 
     checkKingBottomToUpRightDiagonalAttacker,
     checkKingDownToBottomRightDiagonalAttacker,
-    checkKnightAttacker
+    checkKnightAttacker, 
+    checkPawnAttackers,
 } from "./movement"
 import { mergeMaps } from "./util"
 
@@ -77,8 +78,9 @@ const isKingInCheck = (kingPosition, state, player) => {
     const invalidBottomToUpRightDiagonalMoves = checkKingBottomToUpRightDiagonalAttacker(15, kingPosition, state, player)
     const invalidUpToDownRightDiagonalMoves = checkKingDownToBottomRightDiagonalAttacker(15, kingPosition, state, player)
     const invalidMovesCausedByKnight = checkKnightAttacker(15, kingPosition, state, player)
+    const invalidMovesCausedByPawn = checkPawnAttackers(15, kingPosition, state, player)
 
-    const invalidMoves = mergeMaps(invalidHorizontalMoves, invalidVerticalMoves, invalidBottomToUpRightDiagonalMoves, invalidUpToDownRightDiagonalMoves, invalidMovesCausedByKnight)
+    const invalidMoves = mergeMaps(invalidHorizontalMoves, invalidVerticalMoves, invalidBottomToUpRightDiagonalMoves, invalidUpToDownRightDiagonalMoves, invalidMovesCausedByKnight, invalidMovesCausedByPawn)
     return invalidMoves.size > 0
 }
 
