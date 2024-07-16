@@ -968,8 +968,9 @@ const checkKingVerticalAttacker = (boardSize, kingPosition, newState, player) =>
                 && player.color == newState[row][kingPosition.col].characterColor){
                 kingNode = node
             }
+        } else {
+            invalidKingMoves.set({row, col : kingPosition.col}, true)
         }
-        invalidKingMoves.set({row, col : kingPosition.col}, true)
     }   
 
     if (kingNode){
@@ -1023,8 +1024,9 @@ const checkKingHorizontalAttacker = (boardSize, kingPosition, newState, player) 
                 && player.color == newState[kingPosition.row][col].characterColor){
                 kingNode = node
             }
+        } else {
+            invalidKingMoves.set({row : kingPosition.row, col}, true)
         }
-        invalidKingMoves.set({row : kingPosition.row, col}, true)
     }  
     // console.log(charLineList)
     // console.log(kingNode)
@@ -1088,8 +1090,9 @@ const  checkKingDownToBottomRightDiagonalAttacker = (boardSize, kingPosition, ne
                 && player.color == newState[tempRow][tempCol].characterColor){
                 kingNode = node
             }
-        } 
-        invalidKingMoves.set({row : tempRow, col : tempCol}, true)
+        } else {
+            invalidKingMoves.set({row : tempRow, col : tempCol}, true)
+        }
         tempRow++
         tempCol++
     } 
@@ -1154,8 +1157,9 @@ const checkKingBottomToUpRightDiagonalAttacker = (boardSize, kingPosition, newSt
                 && player.color == newState[tempRow][tempCol].characterColor){
                 kingNode = node
             }
-        } 
-        invalidKingMoves.set({row : tempRow, col : tempCol}, true)
+        } else {
+            invalidKingMoves.set({row : tempRow, col : tempCol}, true)
+        }
         tempRow--
         tempCol++
     } 
@@ -1235,6 +1239,18 @@ const checkPawnAttackers = (boardSize, kingPosition, newState, player) => {
     return invalidKingMoves
 }
 
+const checkIfKingStillHasValidMoves = (newState) => {
+    const boardSize = newState.length
+    for (let row = 0; row < boardSize; row++){
+        for (let col = 0; col < boardSize; col++) {
+            if (newState[row][col].validMove) {
+                return true
+            }
+        }
+    }   
+    return false
+}
+
 export {
     checkKingHorizontalAttacker, 
     checkKingVerticalAttacker, 
@@ -1242,6 +1258,7 @@ export {
     checkKingDownToBottomRightDiagonalAttacker,
     checkKnightAttacker,
     checkPawnAttackers,
+    checkIfKingStillHasValidMoves,
     noMovement,
     pawnMovement,
     kingMovement,  

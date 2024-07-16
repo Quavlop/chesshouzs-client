@@ -76,14 +76,7 @@ const invalidKingUnderAttackMoves = (kingPosition, state, player) => {
     const invalidHorizontalMoves = checkKingHorizontalAttacker(15, kingPosition, state, player)
     const invalidVerticalMoves = checkKingVerticalAttacker(15, kingPosition, state, player)
     const invalidBottomToUpRightDiagonalMoves = checkKingBottomToUpRightDiagonalAttacker(15, kingPosition, state, player)
-    for (let i of invalidBottomToUpRightDiagonalMoves.keys()){
-        console.log(i)
-    }
-    console.log("KWKW")
     const invalidUpToDownRightDiagonalMoves = checkKingDownToBottomRightDiagonalAttacker(15, kingPosition, state, player)
-    for (let i of invalidUpToDownRightDiagonalMoves.keys()){
-        console.log(i)
-    }
     const invalidMovesCausedByKnight = checkKnightAttacker(15, kingPosition, state, player)
     const invalidMovesCausedByPawn = checkPawnAttackers(15, kingPosition, state, player)
     

@@ -1,5 +1,6 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image } from '@chakra-ui/react';
 import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves} from "@/helpers/utils/game"
+import { checkIfKingStillHasValidMoves } from '@/helpers/utils/movement';
 import constants from '@/config/constants/game';
 
 
@@ -58,6 +59,10 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
               }})
               for (const cell of invalidKingMoves.keys()) {
                 newState[cell.row][cell.col].validMove = false
+              } 
+              var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
+              if (!stillHaveValidMoves){
+                console.log("CHECKMATED")
               }
             } 
             setGameStateHandler(newState)          
