@@ -1,5 +1,5 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image } from '@chakra-ui/react';
-import {boardCellColorHandler, handleMovement, isKingInCheck} from "@/helpers/utils/game"
+import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves} from "@/helpers/utils/game"
 import constants from '@/config/constants/game';
 
 
@@ -47,8 +47,8 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             }, newState)
             if (!newState) return
             setPrevClickedCharHandler({...newState[row][col], row, col})
-            var isPlayerKingInCheck = isKingInCheck(playerGameStatus.kingPosition ,newState,playerGameStatus)
-            if (isPlayerKingInCheck){
+            var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
+            if (invalidKingMoves.size > 0){ // means that king is in check
               setIsInCheckHandler(true)
               console.log("CHECKKK")
             }
@@ -56,7 +56,10 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
               setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
                 ...playerGameStatus.kingPosition, row, col
               }})
-            }
+              for (const cell of invalidKingMoves.keys()) {
+                newState[cell.row][cell.col].validMove = false
+              }
+            } 
             setGameStateHandler(newState)          
 
         })}

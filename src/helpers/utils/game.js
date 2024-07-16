@@ -72,16 +72,23 @@ const transformBoard = (state) => {
     return newState
 }
 
-const isKingInCheck = (kingPosition, state, player) => {    
+const invalidKingUnderAttackMoves = (kingPosition, state, player) => {    
     const invalidHorizontalMoves = checkKingHorizontalAttacker(15, kingPosition, state, player)
     const invalidVerticalMoves = checkKingVerticalAttacker(15, kingPosition, state, player)
     const invalidBottomToUpRightDiagonalMoves = checkKingBottomToUpRightDiagonalAttacker(15, kingPosition, state, player)
+    for (let i of invalidBottomToUpRightDiagonalMoves.keys()){
+        console.log(i)
+    }
+    console.log("KWKW")
     const invalidUpToDownRightDiagonalMoves = checkKingDownToBottomRightDiagonalAttacker(15, kingPosition, state, player)
+    for (let i of invalidUpToDownRightDiagonalMoves.keys()){
+        console.log(i)
+    }
     const invalidMovesCausedByKnight = checkKnightAttacker(15, kingPosition, state, player)
     const invalidMovesCausedByPawn = checkPawnAttackers(15, kingPosition, state, player)
-
+    
     const invalidMoves = mergeMaps(invalidHorizontalMoves, invalidVerticalMoves, invalidBottomToUpRightDiagonalMoves, invalidUpToDownRightDiagonalMoves, invalidMovesCausedByKnight, invalidMovesCausedByPawn)
-    return invalidMoves.size > 0
+    return invalidMoves
 }
 
 const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
@@ -91,7 +98,7 @@ const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
 
 
 export {
-    isKingInCheck,
+    invalidKingUnderAttackMoves,
     generateNewNotationState,
     handleMovement,
     getPieceMovementAlgorithm,

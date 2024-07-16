@@ -889,7 +889,7 @@ const validateDisableDownToRightDiagonalMovement = (boardSize, position, newStat
     }
 
     // go to top right
-    while (tempRow > 0 && tempCol < boardSize){
+    while (tempRow >= 0 && tempCol < boardSize){
         if (newState[tempRow][tempCol].characterColor){
 
             var node = new Node({
@@ -1139,7 +1139,7 @@ const checkKingBottomToUpRightDiagonalAttacker = (boardSize, kingPosition, newSt
 
     var invalidKingMoves = new Map()
     // go to top right
-    while (tempRow > 0 && tempCol < boardSize){
+    while (tempRow >= 0 && tempCol < boardSize){
         if (newState[tempRow][tempCol].characterColor){
 
             var node = new Node({
@@ -1177,7 +1177,7 @@ const checkKingBottomToUpRightDiagonalAttacker = (boardSize, kingPosition, newSt
                 return invalidKingMoves
             }
         }
-    }
+    } 
     return new Map()
 }
 
