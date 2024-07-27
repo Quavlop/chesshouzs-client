@@ -12,6 +12,20 @@ const mergeMaps = (...maps) => {
     return mergedMap;
 }
 
+const convertGameVariantToWord = (duration, increment) => {
+    var d = Math.floor(duration / 60)
+    if (increment != 0){
+        return d + " | " + increment
+    }
+    return d + " min"
+}
+
+const formatConventionalGameVariant = (duration, increment) => {
+    return duration + "-" + increment
+}
+
 export {
-    mergeMaps
+    mergeMaps, 
+    convertGameVariantToWord, 
+    formatConventionalGameVariant
 }

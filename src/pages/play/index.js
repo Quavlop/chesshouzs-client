@@ -26,9 +26,10 @@ import Loading from '@/components/sub/Loading';
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
 import GameConstants from '@/config/constants/game'
+import { convertGameVariantToWord, formatConventionalGameVariant } from '@/helpers/utils/util';
 
 
-export default function Play({userData, serverFailure = false, token = ""}) {
+export default function Play({userData, gameVariants, serverFailure = false, token = ""}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -69,6 +70,7 @@ export default function Play({userData, serverFailure = false, token = ""}) {
   });
 
   useEffect(() => {
+    console.log(gameVariants)
     return () => {
       if (socket) socket.close()
     }
@@ -217,80 +219,25 @@ export default function Play({userData, serverFailure = false, token = ""}) {
                       </Box>
                     </Flex>            
 
-                    <Flex gap='.5rem' mt='1rem'>
-                        <Image src="/icons/test.png" w='1.4rem' h='1.4rem'/>
-                        <Text fontSize='1rem'>Bullet</Text>
-                    </Flex>
-                    <Flex gap='.5rem' w='100%' flexGrow={1}>
-                        <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_BULLET, time_control : GameConstants.GAME_TIME_CONTROL_60_0});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>1 min</Button>
-                          <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_BULLET, time_control :  GameConstants.GAME_TIME_CONTROL_60_1});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>1 | 1</Button>
-                  <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_BULLET, time_control : GameConstants.GAME_TIME_CONTROL_120_0});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>2 | 0</Button>                                             
-                    </Flex>
+                      {gameVariants.map(type => {
+                        return <>
+                            <Flex gap='.5rem' mt='1rem'>
+                              <Image src="/icons/test.png" w='1.4rem' h='1.4rem'/>
+                              <Text fontSize='1rem'>{type.name}</Text>
+                            </Flex>
 
-                    <Flex gap='.5rem' mt='1rem'>
-                        <Image src="/icons/test.png" w='1.4rem' h='1.4rem'/>
-                        <Text fontSize='1rem'>Blitz</Text>
-                    </Flex>
-                    <Flex gap='.5rem' w='100%' flexGrow={1}>
-                        <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_BLITZ, time_control : GameConstants.GAME_TIME_CONTROL_180_0});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>3 min</Button>
-                          <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_BLITZ, time_control : GameConstants.GAME_TIME_CONTROL_180_1});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>3 | 1</Button>
-                  <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_BLITZ, time_control : GameConstants.GAME_TIME_CONTROL_300_0});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>5 min</Button>                                             
-                    </Flex>           
-
-                    <Flex gap='.5rem' mt='1rem'>
-                        <Image src="/icons/test.png" w='1.4rem' h='1.4rem'/>
-                        <Text fontSize='1rem'>Rapid</Text>
-                    </Flex>
-                    <Flex gap='.5rem' w='100%' flexGrow={1}>
-                        <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_RAPID, time_control : GameConstants.GAME_TIME_CONTROL_600_0});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>10 min</Button>
-                          <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_RAPID, time_control : GameConstants.GAME_TIME_CONTROL_900_0});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>15 min</Button>
-                  <Button onClick={() => {
-                          setFormData({type : GameConstants.GAME_TYPE_RAPID, time_control : GameConstants.GAME_TIME_CONTROL_1200_0});
-                        }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
-                          color : 'white',
-                          bg : secondaryColor
-                      }}>30 min</Button>                                             
-                    </Flex>   
+                            <Flex gap='.5rem' w='100%' flexGrow={1}>
+                            {type.variants.map(variant => { 
+                                return <Button onClick={() => {
+                                  setFormData({type : type.name, time_control : formatConventionalGameVariant(variant.duration, variant.increment)});
+                                       }} w='33%' px='1.5rem' py='.3rem' fontSize='1rem' border={`1px solid ${secondaryColor}`} _hover={{
+                                        color : 'white',
+                                        bg : secondaryColor
+                              }}>{convertGameVariantToWord(variant.duration, variant.increment)}</Button>
+                            })}
+                            </Flex>
+                        </>
+                      })}
 
 
                     <Button type='submit' mt='1rem' w='100%' px='1.5rem' py='.3rem' bg={secondaryColor} color='white'>Play</Button>                           
@@ -317,51 +264,59 @@ export async function getServerSideProps(context){
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
-  const { API_URL, ENVIRONMENT } = publicRuntimeConfig;     
+  const { API_URL, GAME_API_REST_URL, ENVIRONMENT } = publicRuntimeConfig;     
 
 
   try {
 
 
     const response = await isAuthenticated(API_URL, req.cookies?.__SESS_TOKEN, true);
-
     if (response.code == 200){
 
+      // TODO : change this validation to new backend service API
 
-      const findExistingRoom = await fetch(API_URL + `/play/online/find-existing-game`, {
+      // const findExistingRoom = await fetch(API_URL + `/play/online/find-existing-game`, {
+        // method : "GET",
+        // credentials : 'include',
+        // headers : {
+        //     Cookie : `__SESS_TOKEN=${req.cookies?.__SESS_TOKEN}`
+        // }
+      // });
+
+      // const parsedResponse = await findExistingRoom.json();      
+      // if (parsedResponse.code == 200){
+      //     const room = parsedResponse.data;
+      //     return {
+      //       redirect: {
+      //         destination: `/play/${room?.gameID}`,
+      //         permanent: false,
+      //       },          
+      //     }          
+      // }      
+
+      const getGameVariants = await fetch(GAME_API_REST_URL + '/v1/game', {
         method : "GET",
         credentials : 'include',
         headers : {
             Cookie : `__SESS_TOKEN=${req.cookies?.__SESS_TOKEN}`
         }
-      });
+      })
+    
+      const gameVariantsData = await getGameVariants.json();
+      var gameVariants
+      if (gameVariantsData.code == 200){
+          gameVariants = gameVariantsData.data;
+      }
 
-      const parsedResponse = await findExistingRoom.json();      
-      if (parsedResponse.code == 200){
-          const room = parsedResponse.data;
-          return {
-            redirect: {
-              destination: `/play/${room?.gameID}`,
-              permanent: false,
-            },          
-          }          
-      }      
-      
       return {
         props : {
           serverFailure : false, 
           userData : response.user, 
+          gameVariants,
           token : req.cookies?.__SESS_TOKEN
         }
       }
     }
-
-
-
-
-
-
-
 
     return {
       redirect: {

@@ -4,10 +4,9 @@ import { checkIfKingStillHasValidMoves } from '@/helpers/utils/movement';
 import constants from '@/config/constants/game';
 
 
-const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler}) => {
-  const boardSize = 15;
+const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData}) => {
+  const boardSize = gameData.boardSize;
   const squares = [];
-
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
       squares.push(
@@ -21,9 +20,11 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         justifyContent={"center"}
         alignItems={"center"}
         onClick={() => clickCoordinateHandler({row, col}, () => {
+          
             if (!myTurn){
               return
             }
+
             var newState = state.map(row => row.slice());
             if (newState[row][col].validMove){
                   newState[row][col] = {
@@ -41,18 +42,23 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                     color : (prevClickedChar.row + prevClickedChar.col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9',
                   }
               }
+
             newState = handleMovement(newState[row][col]?.character, {
               row, col, 
               character : newState[row][col]?.character, 
               characterColor : newState[row][col]?.characterColor,
             }, newState)
-            if (!newState) return
+
+            if (!newState) {
+              return
+            }
             setPrevClickedCharHandler({...newState[row][col], row, col})
+
             var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
             if (invalidKingMoves.size > 0){ // means that king is in check
               setIsInCheckHandler(true)
-              console.log("CHECKKK")
             }
+
             if ((newState[row][col]?.character == constants.CHARACTER_KING || newState[row][col]?.character == constants.CHARACTER_KING.toUpperCase()) && newState[row][col]?.characterColor == playerGameStatus.color){
               setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
                 ...playerGameStatus.kingPosition, row, col
@@ -65,8 +71,8 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                 console.log("CHECKMATED")
               }
             } 
-            setGameStateHandler(newState)          
 
+            setGameStateHandler(newState)          
         })}
         pb="100%" // Padding bottom to maintain square aspect ratio
         >
@@ -92,17 +98,19 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
 export default  function Board(props){
 
+  const { gameData } = props
+
   return <Grid
-  templateColumns="repeat(15, 1fr)"
-  gap={0}
-  w="100%"
-  maxH="1000px"
-  maxW="1000px"
-  mx="auto"
-  p={0}
-  border={"2px solid #B7C0D8"}
-  >
-    <GameSquares {...props}/>
-  </Grid>
+    templateColumns={`repeat(${gameData.boardSize}, 1fr)`}
+    gap={0}
+    w="100%"
+    maxH="1000px"
+    maxW="1000px"
+    mx="auto"
+    p={0}
+    border={"2px solid #B7C0D8"}
+    >
+      <GameSquares {...props}/>
+    </Grid>
 }
 

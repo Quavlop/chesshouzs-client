@@ -73,12 +73,12 @@ const transformBoard = (state) => {
 }
 
 const invalidKingUnderAttackMoves = (kingPosition, state, player) => {    
-    const invalidHorizontalMoves = checkKingHorizontalAttacker(15, kingPosition, state, player)
-    const invalidVerticalMoves = checkKingVerticalAttacker(15, kingPosition, state, player)
-    const invalidBottomToUpRightDiagonalMoves = checkKingBottomToUpRightDiagonalAttacker(15, kingPosition, state, player)
-    const invalidUpToDownRightDiagonalMoves = checkKingDownToBottomRightDiagonalAttacker(15, kingPosition, state, player)
-    const invalidMovesCausedByKnight = checkKnightAttacker(15, kingPosition, state, player)
-    const invalidMovesCausedByPawn = checkPawnAttackers(15, kingPosition, state, player)
+    const invalidHorizontalMoves = checkKingHorizontalAttacker(state.length, kingPosition, state, player)
+    const invalidVerticalMoves = checkKingVerticalAttacker(state.length, kingPosition, state, player)
+    const invalidBottomToUpRightDiagonalMoves = checkKingBottomToUpRightDiagonalAttacker(state.length, kingPosition, state, player)
+    const invalidUpToDownRightDiagonalMoves = checkKingDownToBottomRightDiagonalAttacker(state.length, kingPosition, state, player)
+    const invalidMovesCausedByKnight = checkKnightAttacker(state.length, kingPosition, state, player)
+    const invalidMovesCausedByPawn = checkPawnAttackers(state.length, kingPosition, state, player)
     
     const invalidMoves = mergeMaps(invalidHorizontalMoves, invalidVerticalMoves, invalidBottomToUpRightDiagonalMoves, invalidUpToDownRightDiagonalMoves, invalidMovesCausedByKnight, invalidMovesCausedByPawn)
     return invalidMoves

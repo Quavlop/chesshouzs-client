@@ -21,7 +21,7 @@ import constants from "@/config/constants/game"
 
 
 
-export default function PlayOnline({userData, serverFailure = false, state, color, kingData}) {
+export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -47,7 +47,9 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
 
   const [playerGameStatus, setPlayerGameStatus] = useState({
     color, kingPosition : kingData
-  })
+  }) 
+
+  const [gameData, setGameData] = useState(gameDetail)
 
   // object of row and col
   const [clickCoordinate, setClickCoordinate] = useState({
@@ -81,6 +83,10 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
 
   const setPlayerGameStatusHandler = (status) => {
     setPlayerGameStatus(status)
+  }
+
+  const setGameDataHandler = (data) => {
+    setGameData(data)
   }
 
 
@@ -204,6 +210,8 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
                 setIsInCheckHandler={setIsInCheckHandler}
                 playerGameStatus={playerGameStatus}
                 setPlayerGameStatusHandler={setPlayerGameStatusHandler}
+                gameData={gameData}
+                setGameDataHandler={setGameDataHandler}
               />
               <GamePanel/>
             </Flex>
@@ -219,7 +227,7 @@ export async function getServerSideProps(context){
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
-  const { API_URL, ENVIRONMENT } = publicRuntimeConfig;     
+  const { API_URL, ENVIRONMENT, GAME_API_REST_URL } = publicRuntimeConfig;     
   var playerColorStub = "WHITE"
   var kingData = null
 
@@ -228,23 +236,52 @@ export async function getServerSideProps(context){
       
       if (response.code == 200){
 
-        if (response.invalidGameID){
+        // if (response.invalidGameID){
 
+        //   return {
+        //     redirect: {
+        //       destination: `/play`,
+        //       permanent: true,
+        //     },
+        //   }          
+        // } 
+
+        console.log(req.cookies?.__SESS_TOKEN)
+        const getCurrentActiveMatchData = await fetch(GAME_API_REST_URL + '/v1/match', {
+          method : "GET",
+          headers : {
+              Authorization : `Bearer ${req.cookies?.__SESS_TOKEN}`
+          }
+        }) 
+
+        const matchDataResp = await getCurrentActiveMatchData.json()
+        if (matchDataResp.code != 200){
           return {
             redirect: {
               destination: `/play`,
               permanent: true,
             },
-          }          
-        } 
+          } 
+        }
+
+        console.log(game_id, matchDataResp)
+        if (matchDataResp.data.id != game_id) {
+          return {
+            redirect: {
+              destination: `/play`,
+              permanent: true,
+            },
+          }
+        }
 
         // validate if player black then transform the stub
         const stateStub = ".q............K|...............|r..............|...............|...............|...............|...............|...............|...............|...............|...............|...............|...............|...............|..............."
         const stateRows = stateStub.split("|")
+        const boardSizeStub = 10
 
 
-        const state = Array(15).fill(null).map((_, row) =>
-            Array(15).fill(null).map((_, col) => {
+        const state = Array(boardSizeStub).fill(null).map((_, row) =>
+            Array(boardSizeStub).fill(null).map((_, col) => {
               var cellData = {
                 character : stateRows[row][col] || ".", 
                 characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
@@ -261,7 +298,11 @@ export async function getServerSideProps(context){
 
               return cellData
             })
-        ) 
+        )  
+
+        const gameDetail = {
+          boardSize : boardSizeStub
+        }
                  
 
         return {
@@ -271,6 +312,7 @@ export async function getServerSideProps(context){
             state : state, 
             color : playerColorStub, 
             kingData,
+            gameDetail
           }
         }
       }
@@ -284,6 +326,7 @@ export async function getServerSideProps(context){
       }    
 
   } catch (err) {
+      console.log(err);
       return { props : {serverFailure : true} }
   }
 
