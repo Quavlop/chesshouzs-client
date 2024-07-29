@@ -1,6 +1,7 @@
-import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image } from '@chakra-ui/react';
+import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image, AspectRatio } from '@chakra-ui/react';
 import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves} from "@/helpers/utils/game"
 import { checkIfKingStillHasValidMoves } from '@/helpers/utils/movement';
+import { Chessboard } from 'react-chessboard';
 import constants from '@/config/constants/game';
 
 
@@ -100,17 +101,43 @@ export default  function Board(props){
 
   const { gameData } = props
 
-  return <Grid
-    templateColumns={`repeat(${gameData.boardSize}, 1fr)`}
-    gap={0}
-    w="100%"
-    maxH="1000px"
-    maxW="1000px"
-    mx="auto"
-    p={0}
-    border={"2px solid #B7C0D8"}
-    >
-      <GameSquares {...props}/>
-    </Grid>
+  // return <Grid
+  //   templateColumns={`repeat(${gameData.boardSize}, 1fr)`}
+  //   gap={0}
+  //   w="100%"
+  //   maxH="1000px"
+  //   maxW="1000px"
+  //   mx="auto"
+  //   p={0}
+  //   border={"2px solid #B7C0D8"}
+  //   >
+  //     <GameSquares {...props}/>
+  //   </Grid>
+  return   <Box
+            w="100%"
+            h="100%"
+            maxH="90vw"
+            maxW="90vh"
+            bg="orange"
+            display={"flex"}
+            justifyContent={"center"}
+            alignItems={"center"}
+          >   
+            <Box
+              w="90%"
+              h="90%"
+              bg="purple"
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <AspectRatio ratio={1} w="100%" h="100%" bg="">
+                <Box>
+                  {/* Your content here */}
+                </Box>
+              </AspectRatio>
+            </Box>
+        </Box>
+
 }
 

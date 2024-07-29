@@ -195,8 +195,8 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
           {!verifiedEmail && <ReVerifyEmailPopup resendEmailVerificationLink={resendEmailVerificationLink} emailVerificationResendMessage={emailVerificationMessage} resendLoading={resendLoading} responseType={resendVerificationLinkResponse}/>}
           {overlay && <Overlay/>}
 
-          <Flex w="100vw" h="100vh">
-            <Flex width="70%" height="auto" justifyContent={"center"} flexDirection={"row"} margin="auto">
+            <Flex w="100vw" h="100vh">
+            <Flex width="90%" height="90%" justifyContent={{base : "flex-start", lg : "center"}} flexDirection={{ base: "column", lg : "row" }} alignItems={{base : "center", lg : "flex-start"}} margin={{base : "auto", lg : "none"}} marginTop={{base : "10rem", lg : "auto"}}>
               <GameBoard 
                 state={gameState} 
                 setGameStateHandler={setGameStateHandler} 
