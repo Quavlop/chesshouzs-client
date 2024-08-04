@@ -30,7 +30,7 @@ const generateNewNotationState = (state) => {
     return notation
 }
 
-const handleMovement = (piece, position, state) => {
+const handleMovement = (piece, position, state, playerColor) => {
     const movement = getPieceMovementAlgorithm()   
 
     var pieceChar = piece.toLowerCase()
@@ -38,7 +38,7 @@ const handleMovement = (piece, position, state) => {
         pieceChar = piece.toLowerCase()
     }
     const handler = movement.get(pieceChar) 
-    return handler({...position, pieceChar}, state)
+    return handler({...position, pieceChar}, state, playerColor)
 }
 
 

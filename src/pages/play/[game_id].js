@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from '@next/font/google'
 import styles from '@/styles/Home.module.css'
-import { Text, Heading, Box, Flex, VStack} from '@chakra-ui/react'
+import { Text, Heading, Box, Flex, VStack, AspectRatio} from '@chakra-ui/react'
 import {useColorMode, useColorModeValue} from '@chakra-ui/color-mode';
 import {colorScheme, responsiveConfig} from '@/helpers/theme.ts';
 import { useContext } from 'react';
@@ -18,14 +18,15 @@ import GamePanel from '@/components/main/GamePanel';
 import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
 import {transformBoard} from '@/helpers/utils/game';
 import constants from "@/config/constants/game"
+import WebSocketClient from '@/config/WebSocket';
+import WebSocketConstants from '@/config/constants/websocket'
 
 
-
-export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail}) {
+export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail, token}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
-  const { API_URL } = publicRuntimeConfig;  
+  const { API_URL,GAME_API_WS_URL } = publicRuntimeConfig;  
 
   const {colorMode, toggleColorMode} = useColorMode();
   
@@ -42,7 +43,9 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
 
   const [gameState, setGameState] = useState(state)
   const [prevClickedChar, setPrevClickedChar] = useState({})
-  const [myTurn, setMyTurn] = useState(true)
+  const [myTurn, setMyTurn] = useState(gameDetail.myTurn)
+  // const [myTurn, setMyTurn] = useState(true)
+
   const [isInCheck, setIsInCheck] = useState(false)
 
   const [playerGameStatus, setPlayerGameStatus] = useState({
@@ -50,6 +53,7 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
   }) 
 
   const [gameData, setGameData] = useState(gameDetail)
+  const [wsConn, setWsConn] = useState(null)
 
   // object of row and col
   const [clickCoordinate, setClickCoordinate] = useState({
@@ -67,6 +71,10 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
 
   const setGameStateHandler = (newState) => { 
       setGameState(newState)
+  }
+
+  const setWsConnHandler = (ws) => {
+    setWsConn(ws)
   }
 
   const setPrevClickedCharHandler = (char) => {
@@ -173,10 +181,32 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
       }    
       setUser(userData);
 
-      // TODO : check apakah perlu transform board
+      // TODO : connect ws 
 
+      const ws = WebSocketClient(GAME_API_WS_URL, token, {
+        onOpen : () => { 
+          ws.send(JSON.stringify(
+            {
+              "event" : WebSocketConstants.WS_EVENT_CONNECT_GAME
+              // TODO : check if this event fails (get response from BE)
+            }
+          ))
+        }, 
+        onMessage : (event) => {
+            const response = JSON.parse(event.data) 
+            if (response.status != "SUCCESS") {
+              return  
+            }
+            if (response.event == WebSocketConstants.WS_EVENT_UPDATE_GAME_STATE) {
+              setGameState(response.data?.state)
+              setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
+            }
+        },
+        onError : () => {},
+        onClose : () => {},
+      })
 
-
+      setWsConn(ws)
     }
     return () => {
       window.removeEventListener('popstate', preventNavigation);
@@ -197,22 +227,24 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
 
             <Flex w="100vw" h="100vh">
             <Flex width="90%" height="90%" justifyContent={{base : "flex-start", lg : "center"}} flexDirection={{ base: "column", lg : "row" }} alignItems={{base : "center", lg : "flex-start"}} margin={{base : "auto", lg : "none"}} marginTop={{base : "10rem", lg : "auto"}}>
-              <GameBoard 
-                state={gameState} 
-                setGameStateHandler={setGameStateHandler} 
-                clickCoordinate={clickCoordinate} 
-                clickCoordinateHandler={clickCoordinateHandler} 
-                prevClickedChar={prevClickedChar}
-                setPrevClickedCharHandler={setPrevClickedCharHandler}
-                myTurn={myTurn}
-                setMyTurnHandler={setMyTurnHandler}
-                isInCheck={isInCheck}
-                setIsInCheckHandler={setIsInCheckHandler}
-                playerGameStatus={playerGameStatus}
-                setPlayerGameStatusHandler={setPlayerGameStatusHandler}
-                gameData={gameData}
-                setGameDataHandler={setGameDataHandler}
-              />
+                <GameBoard 
+                  state={gameState} 
+                  setGameStateHandler={setGameStateHandler} 
+                  clickCoordinate={clickCoordinate} 
+                  clickCoordinateHandler={clickCoordinateHandler} 
+                  prevClickedChar={prevClickedChar}
+                  setPrevClickedCharHandler={setPrevClickedCharHandler}
+                  myTurn={myTurn}
+                  setMyTurnHandler={setMyTurnHandler}
+                  isInCheck={isInCheck}
+                  setIsInCheckHandler={setIsInCheckHandler}
+                  playerGameStatus={playerGameStatus}
+                  setPlayerGameStatusHandler={setPlayerGameStatusHandler}
+                  gameData={gameData}
+                  setGameDataHandler={setGameDataHandler}
+                  wsConn={wsConn}
+                />
+              {/* </AspectRatio> */}
               <GamePanel/>
             </Flex>
           </Flex>
@@ -230,6 +262,7 @@ export async function getServerSideProps(context){
   const { API_URL, ENVIRONMENT, GAME_API_REST_URL } = publicRuntimeConfig;     
   var playerColorStub = "WHITE"
   var kingData = null
+  var state
 
   try {
       const response = await isAuthenticated(`${API_URL}`, req.cookies?.__SESS_TOKEN, true, game_id);
@@ -246,7 +279,6 @@ export async function getServerSideProps(context){
         //   }          
         // } 
 
-        console.log(req.cookies?.__SESS_TOKEN)
         const getCurrentActiveMatchData = await fetch(GAME_API_REST_URL + '/v1/match', {
           method : "GET",
           headers : {
@@ -275,17 +307,18 @@ export async function getServerSideProps(context){
         }
 
         // validate if player black then transform the stub
-        const stateStub = ".q............K|...............|r..............|...............|...............|...............|...............|...............|...............|...............|...............|...............|...............|...............|..............."
+        const stateStub = matchDataResp.data?.gameNotation || ""
         const stateRows = stateStub.split("|")
-        const boardSizeStub = 10
+        console.log(stateRows)
+        const boardSizeStub = stateRows.length
 
 
-        const state = Array(boardSizeStub).fill(null).map((_, row) =>
+        state = Array(boardSizeStub).fill(null).map((_, row) =>
             Array(boardSizeStub).fill(null).map((_, col) => {
               var cellData = {
                 character : stateRows[row][col] || ".", 
                 characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
-                inDefaultPosition : true,
+                inDefaultPosition : stateRows[row][col] != null ? true : null,
                 image : "",
                 color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
               }
@@ -300,8 +333,16 @@ export async function getServerSideProps(context){
             })
         )  
 
+        const myTurn = response.user?.id == matchDataResp.data?.whitePlayer.id;
+        playerColorStub = myTurn ? "WHITE" : "BLACK"
+        if (playerColorStub == "BLACK"){
+          state = transformBoard(state)
+        }
+        
+
         const gameDetail = {
-          boardSize : boardSizeStub
+          boardSize : boardSizeStub,
+          myTurn
         }
                  
 
@@ -312,7 +353,8 @@ export async function getServerSideProps(context){
             state : state, 
             color : playerColorStub, 
             kingData,
-            gameDetail
+            gameDetail, 
+            token : req.cookies?.__SESS_TOKEN
           }
         }
       }

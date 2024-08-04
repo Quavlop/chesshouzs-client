@@ -1,7 +1,7 @@
 import constants from "@/config/constants/game";
 import { LinkedList, Node } from "./linked_list";
 
-const noMovement = (position, state) => {
+const noMovement = (position, state, playerColor) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
@@ -14,7 +14,7 @@ const noMovement = (position, state) => {
     return newState     
 }
 
-const pawnMovement = (position, state) => {
+const pawnMovement = (position, state, playerColor) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
@@ -27,7 +27,10 @@ const pawnMovement = (position, state) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (!disableMovement && (pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState) || pawnKillMovementValidator(position, {row, col}, newState[row][col])) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+            // if (row == 9 || row == 10){
+            //     console.log(row, !disableMovement, pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState, playerColor), !newState[row][col].characterColor, position.characterColor != newState[row][col].characterColor)
+            // }
+            if (!disableMovement && (pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState, playerColor) || pawnKillMovementValidator(position, {row, col}, newState[row][col], playerColor)) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
                 newState[row][col].validMove = true
             }
         }
@@ -35,7 +38,7 @@ const pawnMovement = (position, state) => {
 
     return newState    
 }
-const kingMovement = (position, state) => {
+const kingMovement = (position, state, playerColor) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
@@ -50,7 +53,7 @@ const kingMovement = (position, state) => {
 
     return newState
 }
-const knightMovement = (position, state) => {
+const knightMovement = (position, state, playerColor) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
@@ -71,7 +74,7 @@ const knightMovement = (position, state) => {
 
     return newState
 }
-const queenMovement = (position, state) => {
+const queenMovement = (position, state, playerColor) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
@@ -192,7 +195,7 @@ const queenMovement = (position, state) => {
     return newState
     
 }
-const bishopMovement = (position, state) => {
+const bishopMovement = (position, state, playerColor) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
@@ -254,7 +257,7 @@ const bishopMovement = (position, state) => {
 
     return newState
 }
-const rookMovement = (position, state) => {
+const rookMovement = (position, state, playerColor) => {
     const boardSize = state.length
 
     var newState = state.map(row => row.slice());
@@ -353,18 +356,20 @@ const kingMovementValidator = (characterPosition, clickablePosition, status) => 
         && (Math.abs(characterPosition.col - clickablePosition.col) == 1 || Math.abs(characterPosition.row - clickablePosition.row) == 1)
 }
 
-const pawnStraightMovementValidator = (characterPosition, clickablePosition, status, state) => {
+const pawnStraightMovementValidator = (characterPosition, clickablePosition, status, state, playerColor) => {
     var step = 1
     if (status.inDefaultPosition){
         step = 2
     }
     const diff = characterPosition.row - clickablePosition.row 
-    if (characterPosition.characterColor == "WHITE"){  
+    // if (characterPosition.row == 11) console.log(characterPosition.characterColor, playerColor, clickablePosition)
+    console.log(playerColor)
+    if ((characterPosition.characterColor == "WHITE" && playerColor == "WHITE") || (characterPosition.characterColor == "BLACK" && playerColor == "BLACK")){  
         if (diff == step && status.inDefaultPosition) {
             if (!pawnStraightMovementValidator(characterPosition, {...clickablePosition, row : clickablePosition.row + 1}, {
                 ...status, 
                 characterColor : state[clickablePosition.row+1][clickablePosition.col].characterColor
-            }, state)){
+            }, state, playerColor)){
                 return false
             }
         }
@@ -375,7 +380,7 @@ const pawnStraightMovementValidator = (characterPosition, clickablePosition, sta
         if (!pawnStraightMovementValidator(characterPosition, {...clickablePosition, row : clickablePosition.row - 1}, {
             ...status, 
             characterColor : state[clickablePosition.row-1][clickablePosition.col].characterColor
-        }, state)){
+        }, state, playerColor)){
             return false
         }
     }
@@ -383,8 +388,8 @@ const pawnStraightMovementValidator = (characterPosition, clickablePosition, sta
     return characterPosition.col == clickablePosition.col && -diff <= step && diff < 0 && !status.characterColor
 }
 
-const pawnKillMovementValidator = (characterPosition, clickablePosition, status) => {
-    if (characterPosition.characterColor == "WHITE"){
+const pawnKillMovementValidator = (characterPosition, clickablePosition, status, playerColor) => {
+    if ((characterPosition.characterColor == "WHITE" && playerColor == "WHITE") || (characterPosition.characterColor == "BLACK" && playerColor == "BLACK")){
         return characterPosition.row - clickablePosition.row == 1 && Math.abs(characterPosition.col - clickablePosition.col) == 1 && status?.character != "."
     }
     return characterPosition.row - clickablePosition.row == -1 && Math.abs(characterPosition.col - clickablePosition.col) == 1 && status?.character != "."
