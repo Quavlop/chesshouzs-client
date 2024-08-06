@@ -70,7 +70,6 @@ export default function Play({userData, gameVariants, serverFailure = false, tok
   });
 
   useEffect(() => {
-    console.log(gameVariants)
     return () => {
       if (socket) socket.close()
     }

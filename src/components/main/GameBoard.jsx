@@ -1,5 +1,5 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image, AspectRatio } from '@chakra-ui/react';
-import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves} from "@/helpers/utils/game"
+import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves, transformBoard} from "@/helpers/utils/game"
 import { checkIfKingStillHasValidMoves } from '@/helpers/utils/movement';
 import { generateNewNotationState } from '@/helpers/utils/game';
 import { Chessboard } from 'react-chessboard';
@@ -29,13 +29,15 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             }
 
             var newState = state.map(row => row.slice());
+ 
             if (newState[row][col].validMove){
                   newState[row][col] = {
                       character : prevClickedChar.character, 
                       characterColor : prevClickedChar.characterColor,
                       inDefaultPosition : false, 
                       image : prevClickedChar.image, 
-                      color : prevClickedChar.color
+                      color : prevClickedChar.color,
+                      prevValidMove : true,
                   }
                   newState[prevClickedChar.row][prevClickedChar.col] = {
                     character : ".", 
@@ -43,6 +45,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                     inDefaultPosition : null, 
                     image : null, 
                     color : (prevClickedChar.row + prevClickedChar.col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9',
+                    prevValidMove : false,
                   }
               }
 
@@ -55,6 +58,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             if (!newState) {
               return
             }
+
             setPrevClickedCharHandler({...newState[row][col], row, col})
 
             var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
@@ -74,15 +78,27 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                 console.log("CHECKMATED")
               }
             } 
-            
-            wsConn.send(JSON.stringify(
-              {
-                "event" : WebSocketConstants.WS_EVENT_GAME_PUBLISH_ACTION,
-                "data" : {
-                  "state" : generateNewNotationState(newState)
-                }
+
+
+            var stateNotation 
+            if (newState[row][col].prevValidMove){
+              if (playerGameStatus.color == "WHITE") {
+                stateNotation = newState
+              } else {
+                stateNotation = transformBoard(newState)
               }
-            ))
+              wsConn.send(JSON.stringify(
+                {
+                  "event" : WebSocketConstants.WS_EVENT_GAME_PUBLISH_ACTION,
+                  "data" : {
+                    "state" : generateNewNotationState(stateNotation)
+                  }
+                }
+              ))
+            }
+ 
+            
+
             // newState must be gotten from the above ws emit event's response (UPDATE_GAME_STATE)
             // setGameStateHandler(newState)          
         })}

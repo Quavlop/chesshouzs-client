@@ -198,18 +198,55 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
               return  
             }
             if (response.event == WebSocketConstants.WS_EVENT_UPDATE_GAME_STATE) {
-              setGameState(response.data?.state)
+
+                var state = response.data?.state 
+                if (state.endsWith("|")){
+                  state = state.slice(0,-1)
+                }
+                var newState
+
+                const stateRows = state.split("|")
+                const boardSize = stateRows.length
+
+                newState = Array(boardSize).fill(null).map((_, row) =>
+                  Array(boardSize).fill(null).map((_, col) => {
+                    var cellData = {
+                      character : stateRows[row][col] || ".", 
+                      characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
+                      inDefaultPosition : stateRows[row][col] != null ? true : null,
+                      image : "",
+                      color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
+                    }
+                    if ((stateRows[row][col] == constants.CHARACTER_KING || stateRows[row][col] == constants.CHARACTER_KING.toUpperCase()) && cellData.characterColor == playerGameStatus.color){
+                      setPlayerGameStatus({...playerGameStatus, kingPosition : {
+                        inDefaultPosition : cellData.inDefaultPosition, 
+                        row, col 
+                      }})
+                    }
+      
+                    return cellData
+                  })
+              )  
+              if (playerGameStatus.color == "BLACK"){
+                newState = transformBoard(newState) 
+                setGameState(newState)
+              } else {
+                setGameState(newState)
+              }
               setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
             }
         },
         onError : () => {},
         onClose : () => {},
       })
-
+      
       setWsConn(ws)
     }
     return () => {
       window.removeEventListener('popstate', preventNavigation);
+      if (wsConn){
+        wsConn.close()
+      }
     };         
   }, []);
 
@@ -296,7 +333,6 @@ export async function getServerSideProps(context){
           } 
         }
 
-        console.log(game_id, matchDataResp)
         if (matchDataResp.data.id != game_id) {
           return {
             redirect: {
@@ -306,10 +342,19 @@ export async function getServerSideProps(context){
           }
         }
 
+
+
+        playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
+        const myTurn = matchDataResp.data?.turn == playerColorStub;
+
+
+
         // validate if player black then transform the stub
-        const stateStub = matchDataResp.data?.gameNotation || ""
+        var stateStub = matchDataResp.data?.gameNotation || ""
+        if (stateStub.endsWith("|")){
+          stateStub = stateStub.slice(0, -1)
+        }
         const stateRows = stateStub.split("|")
-        console.log(stateRows)
         const boardSizeStub = stateRows.length
 
 
@@ -333,8 +378,6 @@ export async function getServerSideProps(context){
             })
         )  
 
-        const myTurn = response.user?.id == matchDataResp.data?.whitePlayer.id;
-        playerColorStub = myTurn ? "WHITE" : "BLACK"
         if (playerColorStub == "BLACK"){
           state = transformBoard(state)
         }
@@ -344,6 +387,7 @@ export async function getServerSideProps(context){
           boardSize : boardSizeStub,
           myTurn
         }
+
                  
 
         return {

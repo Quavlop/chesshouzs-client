@@ -362,8 +362,6 @@ const pawnStraightMovementValidator = (characterPosition, clickablePosition, sta
         step = 2
     }
     const diff = characterPosition.row - clickablePosition.row 
-    // if (characterPosition.row == 11) console.log(characterPosition.characterColor, playerColor, clickablePosition)
-    console.log(playerColor)
     if ((characterPosition.characterColor == "WHITE" && playerColor == "WHITE") || (characterPosition.characterColor == "BLACK" && playerColor == "BLACK")){  
         if (diff == step && status.inDefaultPosition) {
             if (!pawnStraightMovementValidator(characterPosition, {...clickablePosition, row : clickablePosition.row + 1}, {
