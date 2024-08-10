@@ -5,8 +5,9 @@ import { generateNewNotationState } from '@/helpers/utils/game';
 import { Chessboard } from 'react-chessboard';
 import constants from '@/config/constants/game';
 import WebSocketConstants from '@/config/constants/websocket'
+import PlayerProfileGameCard from '../sub/PlayerProfileGameCard';
 
-const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn}) => {
+const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData}) => {
   const boardSize = gameData.boardSize;
   const squares = [];
   for (let row = 0; row < boardSize; row++) {
@@ -53,6 +54,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
               row, col, 
               character : newState[row][col]?.character, 
               characterColor : newState[row][col]?.characterColor,
+              validMove : newState[row][col]?.validMove,
             }, newState, playerGameStatus.color)
 
             if (!newState) {
@@ -126,7 +128,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
 export default  function Board(props){
 
-  const { gameData } = props
+  const { gameData, userData, enemyData } = props
 
   // return
   return   <Box
@@ -136,12 +138,17 @@ export default  function Board(props){
             maxW="90vh"
             // bg="orange"
             display={"flex"}
+            flexDirection={"column"}
             justifyContent={"center"}
             alignItems={"center"}
           >   
+            <PlayerProfileGameCard userData={enemyData}/>
+
+            
             <Box
               w="90%"
               h="90%"
+              mb="0.5rem"
               bg="purple"
               display="flex"
               justifyContent="center"
@@ -165,6 +172,9 @@ export default  function Board(props){
                 </Box>
               </AspectRatio>
             </Box>
+            
+            <PlayerProfileGameCard userData={userData}/>
+
         </Box>
 
 }

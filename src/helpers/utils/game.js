@@ -37,6 +37,11 @@ const handleMovement = (piece, position, state, playerColor) => {
     if (piece != "p" && piece != 'P'){
         pieceChar = piece.toLowerCase()
     }
+
+    if (position.characterColor != playerColor && !position.validMove){
+        pieceChar = "."
+    }
+
     const handler = movement.get(pieceChar) 
     return handler({...position, pieceChar}, state, playerColor)
 }

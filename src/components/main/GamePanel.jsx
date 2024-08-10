@@ -3,7 +3,7 @@ import {Box, Flex} from '@chakra-ui/react';
 
 
 export default function GamePanel(){
-    return <Flex flexDirection={"column"} justifyContent={"space-between"} width={{base : "100%", lg : "25%"}} alignItems={"center"} h={{base : "auto", lg : "100%"}}>
+    return <Flex flexDirection={"column"} justifyContent={"space-between"} mt={{base : "5rem", lg : 0}} width={{base : "100%", lg : "25%"}} alignItems={"center"} h={{base : "auto", lg : "100%"}}>
         <Box 
             bg={"#7B61FF"} 
             width={"100%"} 

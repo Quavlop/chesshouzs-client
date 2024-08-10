@@ -22,7 +22,7 @@ import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
 
 
-export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail, token}) {
+export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -180,7 +180,7 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
         setOverlay(true);      
       }    
       setUser(userData);
-
+      console.log(userData);
       // TODO : connect ws 
 
       const ws = WebSocketClient(GAME_API_WS_URL, token, {
@@ -280,6 +280,8 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
                   gameData={gameData}
                   setGameDataHandler={setGameDataHandler}
                   wsConn={wsConn}
+                  userData={userData}
+                  enemyData={enemyData}
                 />
               {/* </AspectRatio> */}
               <GamePanel/>
@@ -345,6 +347,7 @@ export async function getServerSideProps(context){
 
 
         playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
+        const enemyData = playerColorStub == "WHITE" ? matchDataResp.data?.blackPlayer : matchDataResp.data?.whitePlayer;
         const myTurn = matchDataResp.data?.turn == playerColorStub;
 
 
@@ -389,11 +392,11 @@ export async function getServerSideProps(context){
         }
 
                  
-
         return {
           props : {
             serverFailure : false, 
             userData : response.user,
+            enemyData,
             state : state, 
             color : playerColorStub, 
             kingData,
