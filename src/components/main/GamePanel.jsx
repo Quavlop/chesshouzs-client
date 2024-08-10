@@ -1,6 +1,5 @@
-import {Box, Flex} from '@chakra-ui/react';
-
-
+import {Box, Flex, SimpleGrid} from '@chakra-ui/react';
+import SkillCard from '../sub/SkillCard';
 
 export default function GamePanel(){
     return <Flex flexDirection={"column"} justifyContent={"space-between"} mt={{base : "5rem", lg : 0}} width={{base : "100%", lg : "25%"}} alignItems={"center"} h={{base : "auto", lg : "100%"}}>
@@ -12,6 +11,11 @@ export default function GamePanel(){
             minW="450px"
             border={"2px solid #B7C0D8"}
         >
+            <SimpleGrid columns={4} spacing={2} p={"0.5rem"}>
+                {Array.from({ length: 11 }, (_, index) => (
+                    <SkillCard key={index}/>
+                ))}
+            </SimpleGrid>
 
         </Box>
         <Box 
