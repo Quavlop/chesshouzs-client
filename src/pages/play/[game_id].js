@@ -22,7 +22,7 @@ import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
 
 
-export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData}) {
+export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -284,7 +284,7 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
                   enemyData={enemyData}
                 />
               {/* </AspectRatio> */}
-              <GamePanel/>
+              <GamePanel skillStats={skillStats}/>
             </Flex>
           </Flex>
 
@@ -344,6 +344,24 @@ export async function getServerSideProps(context){
           }
         }
 
+        const getPlayerSkillStats = await fetch(GAME_API_REST_URL + '/v1/match/skills', {
+          method : "GET",
+          headers : {
+              Authorization : `Bearer ${req.cookies?.__SESS_TOKEN}`
+          }
+        }) 
+
+        const skillStats = await getPlayerSkillStats.json()
+        console.log(skillStats)
+        if (skillStats.code != 200){
+          return {
+            redirect: {
+              destination: `/play`,
+              permanent: true,
+            },
+          } 
+        }
+
 
 
         playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
@@ -401,6 +419,7 @@ export async function getServerSideProps(context){
             color : playerColorStub, 
             kingData,
             gameDetail, 
+            skillStats,
             token : req.cookies?.__SESS_TOKEN
           }
         }
