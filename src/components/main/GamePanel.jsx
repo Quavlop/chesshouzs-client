@@ -1,7 +1,7 @@
 import {Box, Flex, SimpleGrid, Button, Text} from '@chakra-ui/react';
 import SkillCard from '../sub/SkillCard';
 
-export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setOnHoldSkillHandler, resetSkillStateHandler, activeSkillSet}){
+export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setOnHoldSkillHandler, resetSkillStateHandler, activeSkillSet, myTurn}){
     return <Flex flexDirection={"column"} justifyContent={"space-between"} mt={{base : "5rem", lg : 0}} width={{base : "100%", lg : "25%"}} alignItems={"center"} h={{base : "auto", lg : "100%"}}>
         <Box 
             bg={"#7B61FF"} 
@@ -30,7 +30,7 @@ export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setO
                     :
                         <SimpleGrid columns={4} spacing={2} p={"0.5rem"}>
                             {Array.from({ length: skillStats.data?.length }, (_, index) => (
-                                <SkillCard key={index} data={skillStats.data[index]} onClickHandler={onClickHandler}/>
+                                <SkillCard key={index} data={skillStats.data[index]} onClickHandler={onClickHandler} myTurn={myTurn}/>
                             ))}
                         </SimpleGrid>
             }

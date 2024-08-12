@@ -325,6 +325,7 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
                 setOnHoldSkillHandler={setOnHoldSkillHandler}
                 resetSkillStateHandler={() => resetSkillStateWrapperHandler(gameState)}
                 activeSkillSet={activeSkillSet}
+                myTurn={myTurn}
                 />
             </Flex>
           </Flex>

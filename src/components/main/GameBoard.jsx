@@ -33,11 +33,11 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         position={"relative"}
         onClick={() => clickCoordinateHandler({row, col}, () => {
           
-            if (!myTurn){
+            if (state[row][col].onHoldSkill){
               return
             }
 
-            if (state[row][col].onHoldSkill){
+            if (!myTurn){
               return
             }
 

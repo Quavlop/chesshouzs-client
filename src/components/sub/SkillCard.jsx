@@ -1,9 +1,9 @@
 import { Box } from "@chakra-ui/react"
 
-const SkillCard = ({key, data, onClickHandler}) => {
+const SkillCard = ({key, data, onClickHandler, myTurn}) => {
     return <Box
         key={key}
-        bg="white"
+        bg={myTurn ? "white" : "grey"}
         border="1px solid #B7C0D8"
         height="100%"
         display="flex"
@@ -12,7 +12,12 @@ const SkillCard = ({key, data, onClickHandler}) => {
         borderRadius="md"
         h="100px"
         minH={0}
-        onClick={() => onClickHandler(data)}
+        onClick={() => {
+            if (!myTurn) {
+                return
+            }
+            onClickHandler(data)
+        }}
     >
         {data.name}
     </Box>    

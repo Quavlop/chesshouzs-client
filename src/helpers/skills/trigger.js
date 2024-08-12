@@ -8,8 +8,13 @@ const triggerSkills = (skill, playerColor, state) => {
                 newState[row][col].onHoldSkill = true
 
                 if (newState[row][col].character != "." && playerColor == newState[row][col]?.characterColor && skill.forSelf && !skill.forEnemy){
+                    // for self (buff / defense)
                     newState[row][col].onHoldSkillClickable = true
                 } else if (newState[row][col].character != "." && playerColor != newState[row][col]?.characterColor && skill.forEnemy && !skill.forSelf){
+                    // for enemy (attack)
+                    newState[row][col].onHoldSkillClickable = true
+                } else if (newState[row][col].character == "." && !skill.forEnemy && !skill.forSelf){
+                    // skill active on empty cells
                     newState[row][col].onHoldSkillClickable = true
                 }
 
