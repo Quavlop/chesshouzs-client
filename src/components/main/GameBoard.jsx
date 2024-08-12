@@ -16,7 +16,15 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         <Box
         key={`${row}-${col}`}
         // bg={(clickCoordinate.row == row && clickCoordinate.col == col) ? "red" : state[row][col]?.color }
-        bg={() => boardCellColorHandler(clickCoordinate, {row, col, movable : state[row][col]?.validMove}, state[row][col]?.color)}
+        bg={() => boardCellColorHandler(clickCoordinate, 
+          {
+            row, col, 
+            movable : state[row][col]?.validMove,
+            onHoldSkill : state[row][col]?.onHoldSkill, 
+            onHoldSkillClickable : state[row][col]?.onHoldSkillClickable,
+          }, 
+          state[row][col]?.color)
+        }
         w="100%"
         h="100%"
         display="flex"
@@ -26,6 +34,10 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         onClick={() => clickCoordinateHandler({row, col}, () => {
           
             if (!myTurn){
+              return
+            }
+
+            if (state[row][col].onHoldSkill){
               return
             }
 

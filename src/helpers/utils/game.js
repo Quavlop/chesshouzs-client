@@ -90,6 +90,12 @@ const invalidKingUnderAttackMoves = (kingPosition, state, player) => {
 }
 
 const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
+   if (target.onHoldSkillClickable){
+        return "pink"
+   }
+//    if (target.onHoldSkill){
+//         return "lime"
+//    }
    if (target.movable) return "yellow"
    return clickCoordinate.row == target.row && clickCoordinate.col == target.col ? "red" : defaultColor
 }

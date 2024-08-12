@@ -1,6 +1,6 @@
 import { Box } from "@chakra-ui/react"
 
-const SkillCard = ({key}) => {
+const SkillCard = ({key, data, onClickHandler}) => {
     return <Box
         key={key}
         bg="white"
@@ -12,7 +12,9 @@ const SkillCard = ({key}) => {
         borderRadius="md"
         h="100px"
         minH={0}
+        onClick={() => onClickHandler(data)}
     >
+        {data.name}
     </Box>    
 }
 

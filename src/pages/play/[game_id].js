@@ -17,6 +17,8 @@ import GameBoard from '@/components/main/GameBoard';
 import GamePanel from '@/components/main/GamePanel';
 import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
 import {transformBoard} from '@/helpers/utils/game';
+import { triggerSkills } from '@/helpers/skills/trigger'
+import { resetSkillBoardStats } from '@/helpers/utils/util'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
@@ -37,6 +39,8 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
   const [overlay, setOverlay] = useState(false);    
   const [csrfToken, setCsrfToken] = useState('');    
 
+  const [onHoldSkill, setOnHoldSkill] = useState(false);
+
   const [emailVerificationMessage, setEmailVerificationMessage] = useState("");  
   const [resendLoading, setResendLoading] = useState(false);  
   const [resendVerificationLinkResponse, setResendVerificationLinkResponse] = useState(null);    
@@ -54,6 +58,7 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
 
   const [gameData, setGameData] = useState(gameDetail)
   const [wsConn, setWsConn] = useState(null)
+  const [activeSkillSet, setActiveSkillSet] = useState(null)
 
   // object of row and col
   const [clickCoordinate, setClickCoordinate] = useState({
@@ -68,6 +73,14 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
       })
       coordinateHandlerCallback()
   } 
+
+  const setOnHoldSkillHandler = (bool) => {
+    setOnHoldSkill(bool)
+  }
+
+  const setActiveSkillSetHandler = (skill) => {
+      setActiveSkillSet(skill)
+  }
 
   const setGameStateHandler = (newState) => { 
       setGameState(newState)
@@ -251,7 +264,28 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
   }, []);
 
   useEffect(() => {
-  }, [gameState])
+  }, [gameState]) 
+
+
+  const triggerSkillsWrapperHandler = (skill) => {
+    const preprocess = triggerSkills(skill, playerGameStatus?.color, gameState)
+    const { state } = preprocess
+
+    if (!skill.autoTrigger){
+      setOnHoldSkill(true)
+    }
+
+    setActiveSkillSet(skill)
+    setGameState(state)
+    
+    // return result
+  }
+
+  const resetSkillStateWrapperHandler = (state) => {
+    const newState = resetSkillBoardStats(state) 
+    setGameState(newState)
+    setOnHoldSkill(false)
+  }
 
   return (
     serverFailure 
@@ -262,7 +296,7 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
           {!verifiedEmail && <ReVerifyEmailPopup resendEmailVerificationLink={resendEmailVerificationLink} emailVerificationResendMessage={emailVerificationMessage} resendLoading={resendLoading} responseType={resendVerificationLinkResponse}/>}
           {overlay && <Overlay/>}
 
-            <Flex w="100vw" h="100vh">
+            <Flex w="100vw" h="100vh" bg={onHoldSkill ? "#454545" : "#F4F4F4"}>
             <Flex width="90%" height="90%" justifyContent={{base : "flex-start", lg : "center"}} flexDirection={{ base: "column", lg : "row" }} alignItems={{base : "center", lg : "flex-start"}} margin={{base : "auto", lg : "none"}} marginTop={{base : "10rem", lg : "auto"}}>
                 <GameBoard 
                   state={gameState} 
@@ -284,7 +318,14 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
                   enemyData={enemyData}
                 />
               {/* </AspectRatio> */}
-              <GamePanel skillStats={skillStats}/>
+              <GamePanel 
+                skillStats={skillStats} 
+                onClickHandler={triggerSkillsWrapperHandler} 
+                onHoldSkill={onHoldSkill}
+                setOnHoldSkillHandler={setOnHoldSkillHandler}
+                resetSkillStateHandler={() => resetSkillStateWrapperHandler(gameState)}
+                activeSkillSet={activeSkillSet}
+                />
             </Flex>
           </Flex>
 

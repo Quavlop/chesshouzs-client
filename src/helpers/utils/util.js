@@ -24,8 +24,21 @@ const formatConventionalGameVariant = (duration, increment) => {
     return duration + "-" + increment
 }
 
+const resetSkillBoardStats = (state) => {
+
+    var newState = state.map(row => row.slice());
+    for (let row = 0; row < state.length; row++) {
+        for (let col = 0; col < state.length; col++) {
+            newState[row][col].onHoldSkill = false
+            newState[row][col].onHoldSkillClickable = false
+        }
+    }
+    return newState
+}
+
 export {
     mergeMaps, 
     convertGameVariantToWord, 
-    formatConventionalGameVariant
+    formatConventionalGameVariant, 
+    resetSkillBoardStats
 }
