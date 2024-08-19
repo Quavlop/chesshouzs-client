@@ -19,16 +19,17 @@ import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
 import {transformBoard} from '@/helpers/utils/game';
 import { triggerSkills } from '@/helpers/skills/trigger'
 import { resetSkillBoardStats } from '@/helpers/utils/util'
+import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
 
 
-export default function PlayOnline({userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats}) {
+export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
-  const { API_URL,GAME_API_WS_URL } = publicRuntimeConfig;  
+  const { API_URL,GAME_API_WS_URL, GAME_API_REST_URL } = publicRuntimeConfig;  
 
   const {colorMode, toggleColorMode} = useColorMode();
   
@@ -193,7 +194,6 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
         setOverlay(true);      
       }    
       setUser(userData);
-      console.log(userData);
       // TODO : connect ws 
 
       const ws = WebSocketClient(GAME_API_WS_URL, token, {
@@ -266,6 +266,41 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
   useEffect(() => {
   }, [gameState]) 
 
+  const executeSkillWrapper = async (position) => {
+    /*
+      position : {
+        row : *** 
+        col : ***
+      }
+    */
+
+    const args = {
+        position, 
+        gameId,
+        playerId : userData?.id, 
+    }
+
+    /*
+      DOC : 
+      execute() returns the new state of the data post-skill trigger
+    */
+
+    var preState = gameState
+    if (playerGameStatus.color == "BLACK"){
+      preState = transformBoard(gameState)
+      args.position = {
+        row : gameState.length - position.row - 1,
+        col : gameState.length - position.col - 1,
+      }
+    }
+
+    const data = await execute(activeSkillSet, preState, args, GAME_API_REST_URL, token)
+    if (data.code != 200){
+        console.log("FAILS")
+        return
+    }
+    console.log(data)
+  }
 
   const triggerSkillsWrapperHandler = (skill) => {
     const preprocess = triggerSkills(skill, playerGameStatus?.color, gameState)
@@ -315,7 +350,8 @@ export default function PlayOnline({userData, serverFailure = false, state, colo
                   setGameDataHandler={setGameDataHandler}
                   wsConn={wsConn}
                   userData={userData}
-                  enemyData={enemyData}
+                  enemyData={enemyData} 
+                  executeSkill={executeSkillWrapper}
                 />
               {/* </AspectRatio> */}
               <GamePanel 
@@ -394,7 +430,6 @@ export async function getServerSideProps(context){
         }) 
 
         const skillStats = await getPlayerSkillStats.json()
-        console.log(skillStats)
         if (skillStats.code != 200){
           return {
             redirect: {
@@ -454,6 +489,7 @@ export async function getServerSideProps(context){
                  
         return {
           props : {
+            gameId : game_id,
             serverFailure : false, 
             userData : response.user,
             enemyData,

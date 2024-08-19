@@ -13,6 +13,7 @@ import {
     checkKingDownToBottomRightDiagonalAttacker,
     checkKnightAttacker, 
     checkPawnAttackers,
+    evolvedPawnMovement,
 } from "./movement"
 import { mergeMaps } from "./util"
 
@@ -57,6 +58,9 @@ const getPieceMovementAlgorithm = () => {
     map.set(constants.CHARACTER_QUEEN, queenMovement)
     map.set(constants.CHARACTER_KNIGHT, knightMovement)
     map.set(constants.CHARACTER_ROOK, rookMovement)
+
+    // special characters 
+    map.set(constants.CHARACTER_EVOLVED_PAWN, evolvedPawnMovement)
 
     return map
 }

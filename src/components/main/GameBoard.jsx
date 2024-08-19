@@ -7,7 +7,7 @@ import constants from '@/config/constants/game';
 import WebSocketConstants from '@/config/constants/websocket'
 import PlayerProfileGameCard from '../sub/PlayerProfileGameCard';
 
-const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData}) => {
+const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData, executeSkill}) => {
   const boardSize = gameData.boardSize;
   const squares = [];
   for (let row = 0; row < boardSize; row++) {
@@ -32,14 +32,20 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         alignItems={"center"}
         position={"relative"}
         onClick={() => clickCoordinateHandler({row, col}, () => {
+
+            if (!myTurn){
+              return
+            }
+
+            if (state[row][col].onHoldSkillClickable){
+              executeSkill({row, col})
+              return
+            }
           
             if (state[row][col].onHoldSkill){
               return
             }
 
-            if (!myTurn){
-              return
-            }
 
             var newState = state.map(row => row.slice());
  

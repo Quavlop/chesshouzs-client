@@ -24,9 +24,13 @@ const constants = {
 	CHARACTER_QUEEN : "q",
 	CHARACTER_BISHOP : "b",
 	CHARACTER_ROOK : "r",
+	CHARACTER_EVOLVED_PAWN : "e",
 
-
-
+	SKILL_ENLIGHTENED_APPRENTICE : "Enlightened Apprentice", 
+	SKILL_THE_GREAT_WALL : "The Great Wall",
+	SKILL_FOG_MASTER : "Fog Master", 
+	SKILL_FREEZING_WAND : "Freezing Wand",
+	SKILL_PARALYZER : "Paralyzer",
 }
 
 export default constants

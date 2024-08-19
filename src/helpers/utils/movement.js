@@ -334,6 +334,22 @@ const rookMovement = (position, state, playerColor) => {
     return newState
 }
 
+const evolvedPawnMovement = (position, state, playerColor) => {
+    const boardSize = state.length
+
+    var newState = state.map(row => row.slice());
+    for (let row = 0; row < boardSize; row++) {
+        for (let col = 0; col < boardSize; col++) {
+            newState[row][col].validMove = false
+            if (kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+                newState[row][col].validMove = true
+            }
+        }
+    }
+
+    return newState
+}
+
 
 const diagonalMovementValidator = (characterPosition, clickablePosition, status) => {
     const rowDiff = Math.abs(characterPosition.row - clickablePosition.row)
@@ -1268,5 +1284,6 @@ export {
     knightMovement,
     queenMovement, 
     bishopMovement, 
-    rookMovement
+    rookMovement, 
+    evolvedPawnMovement
 }
