@@ -247,6 +247,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 setGameState(newState)
               }
               setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
+              setActiveSkillSet(null)
+              setOnHoldSkill(false)
             }
         },
         onError : () => {},

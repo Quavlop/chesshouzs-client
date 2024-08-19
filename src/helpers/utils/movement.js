@@ -1,5 +1,6 @@
 import constants from "@/config/constants/game";
 import { LinkedList, Node } from "./linked_list";
+import { isWall } from "./game";
 
 const noMovement = (position, state, playerColor) => {
     const boardSize = state.length
@@ -30,7 +31,7 @@ const pawnMovement = (position, state, playerColor) => {
             // if (row == 9 || row == 10){
             //     console.log(row, !disableMovement, pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState, playerColor), !newState[row][col].characterColor, position.characterColor != newState[row][col].characterColor)
             // }
-            if (!disableMovement && (pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState, playerColor) || pawnKillMovementValidator(position, {row, col}, newState[row][col], playerColor)) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+            if (!disableMovement && !isWall(newState[row][col].character) && (pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState, playerColor) || pawnKillMovementValidator(position, {row, col}, newState[row][col], playerColor)) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
                 newState[row][col].validMove = true
             }
         }
@@ -45,7 +46,7 @@ const kingMovement = (position, state, playerColor) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor) && !kingUnsafePositionHandler(position.characterColor, {row, col}, state)){
+            if (!isWall(newState[row][col].character) && kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor) && !kingUnsafePositionHandler(position.characterColor, {row, col}, state)){
                 newState[row][col].validMove = true
             }
         }
@@ -66,7 +67,7 @@ const knightMovement = (position, state, playerColor) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (!disableMovement && knightShapeMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+            if (!isWall(newState[row][col].character) && !disableMovement && knightShapeMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
                 newState[row][col].validMove = true
             }
         }
@@ -96,6 +97,9 @@ const queenMovement = (position, state, playerColor) => {
             // to left  
             for (let col = position.col; col >= 0; col--){
                 if (col == position.col) continue
+                if (isWall(newState[position.row][col].character)){
+                    break
+                }
                 newState[position.row][col].validMove = true
                 if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
                     break
@@ -108,6 +112,9 @@ const queenMovement = (position, state, playerColor) => {
             // to right
             for (let col = position.col; col < boardSize; col++){
                 if (col == position.col) continue
+                if (isWall(newState[position.row][col].character)){
+                    break
+                }
                 newState[position.row][col].validMove = true
                 if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
                     break
@@ -124,6 +131,9 @@ const queenMovement = (position, state, playerColor) => {
         // to up
         for (let row = position.row; row >= 0; row--){
             if (row == position.row) continue
+            if (isWall(newState[row][position.col].character)){
+                break
+            }
             newState[row][position.col].validMove = true
             if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
                 break
@@ -136,6 +146,9 @@ const queenMovement = (position, state, playerColor) => {
         // to down
         for (let row = position.row; row < boardSize; row++){
             if (row == position.row) continue
+            if (isWall(newState[row][position.col].character)){
+                break
+            }
             newState[row][position.col].validMove = true
             if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
                 break
@@ -153,6 +166,9 @@ const queenMovement = (position, state, playerColor) => {
         var colCtr = position.col 
         while (rowCtr > 0 && colCtr > 0){
             if (newState[rowCtr-1][colCtr-1].characterColor && newState[rowCtr-1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr-1) break
+            if (isWall(newState[rowCtr-1][colCtr-1].character)){
+                break
+            }
             newState[--rowCtr][--colCtr].validMove = true 
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -164,6 +180,9 @@ const queenMovement = (position, state, playerColor) => {
         colCtr = position.col 
         while (rowCtr > 0 && colCtr < boardSize - 1){
             if (newState[rowCtr-1][colCtr+1].characterColor && newState[rowCtr-1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr+1) break
+            if (isWall(newState[rowCtr-1][colCtr+1].character)){
+                break
+            }
             newState[--rowCtr][++colCtr].validMove = true
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -176,6 +195,9 @@ const queenMovement = (position, state, playerColor) => {
         colCtr = position.col 
         while (rowCtr < boardSize - 1 && colCtr > 0){
             if (newState[rowCtr+1][colCtr-1].characterColor && newState[rowCtr+1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr-1) break
+            if (isWall(newState[rowCtr+1][colCtr-1].character)){
+                break
+            }
             newState[++rowCtr][--colCtr].validMove = true
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -187,6 +209,9 @@ const queenMovement = (position, state, playerColor) => {
         colCtr = position.col 
         while (rowCtr < boardSize - 1 && colCtr < boardSize - 1){
             if (newState[rowCtr+1][colCtr+1].characterColor && newState[rowCtr+1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr+1) break
+            if (isWall(newState[rowCtr+1][colCtr+1].character)){
+                break
+            }
             newState[++rowCtr][++colCtr].validMove = true
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -216,6 +241,9 @@ const bishopMovement = (position, state, playerColor) => {
         var colCtr = position.col 
         while (rowCtr > 0 && colCtr > 0){
             if (newState[rowCtr-1][colCtr-1].characterColor && newState[rowCtr-1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr-1) break
+            if (isWall(newState[rowCtr-1][colCtr-1].character)){
+                break
+            }
             newState[--rowCtr][--colCtr].validMove = true 
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -227,6 +255,9 @@ const bishopMovement = (position, state, playerColor) => {
         colCtr = position.col 
         while (rowCtr > 0 && colCtr < boardSize - 1){
             if (newState[rowCtr-1][colCtr+1].characterColor && newState[rowCtr-1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr-1 && position.col != colCtr+1) break
+            if (isWall(newState[rowCtr-1][colCtr+1].character)){
+                break
+            }
             newState[--rowCtr][++colCtr].validMove = true
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -239,6 +270,9 @@ const bishopMovement = (position, state, playerColor) => {
         colCtr = position.col 
         while (rowCtr < boardSize - 1 && colCtr > 0){
             if (newState[rowCtr+1][colCtr-1].characterColor && newState[rowCtr+1][colCtr-1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr-1) break
+            if (isWall(newState[rowCtr+1][colCtr-1].character)){
+                break
+            }
             newState[++rowCtr][--colCtr].validMove = true
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -250,6 +284,9 @@ const bishopMovement = (position, state, playerColor) => {
         colCtr = position.col 
         while (rowCtr < boardSize - 1 && colCtr < boardSize - 1){
             if (newState[rowCtr+1][colCtr+1].characterColor && newState[rowCtr+1][colCtr+1].characterColor == position.characterColor && position.row != rowCtr+1 && position.col != colCtr+1) break
+            if (isWall(newState[rowCtr+1][colCtr+1].character)){
+                break
+            }
             newState[++rowCtr][++colCtr].validMove = true
             if (newState[rowCtr][colCtr].characterColor && newState[rowCtr][colCtr].characterColor != position.characterColor) break
         }
@@ -280,6 +317,9 @@ const rookMovement = (position, state, playerColor) => {
         // to up
         for (let row = position.row; row >= 0; row--){
             if (row == position.row) continue
+            if (isWall(newState[row][position.col].character)){
+                break
+            }
             newState[row][position.col].validMove = true
             if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
                 break
@@ -292,6 +332,9 @@ const rookMovement = (position, state, playerColor) => {
         // to down
         for (let row = position.row; row < boardSize; row++){
             if (row == position.row) continue
+            if (isWall(newState[row][position.col].character)){
+                break
+            }
             newState[row][position.col].validMove = true
             if (newState[row][position.col].characterColor && newState[row][position.col].characterColor != position.characterColor){
                 break
@@ -307,6 +350,9 @@ const rookMovement = (position, state, playerColor) => {
         // to left  
         for (let col = position.col; col >= 0; col--){
             if (col == position.col) continue
+            if (isWall(newState[position.row][col].character)){
+                break
+            }
             newState[position.row][col].validMove = true
             if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
                 break
@@ -319,6 +365,9 @@ const rookMovement = (position, state, playerColor) => {
         // to right
         for (let col = position.col; col < boardSize; col++){
             if (col == position.col) continue
+            if (isWall(newState[position.row][col].character)){
+                break
+            }
             newState[position.row][col].validMove = true
             if (newState[position.row][col].characterColor && newState[position.row][col].characterColor != position.characterColor){
                 break
@@ -341,7 +390,7 @@ const evolvedPawnMovement = (position, state, playerColor) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+            if (kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor) &&  !isWall(newState[row][col].character)){
                 newState[row][col].validMove = true
             }
         }

@@ -33,8 +33,14 @@ const generateNewNotationState = (state) => {
 
 const handleMovement = (piece, position, state, playerColor) => {
     const movement = getPieceMovementAlgorithm()   
+    
+    // wall 
+    if (piece == "0"){
+        return null
+    }
 
     var pieceChar = piece.toLowerCase()
+
     if (piece != "p" && piece != 'P'){
         pieceChar = piece.toLowerCase()
     }
@@ -104,6 +110,9 @@ const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
    return clickCoordinate.row == target.row && clickCoordinate.col == target.col ? "red" : defaultColor
 }
 
+const isWall = (character) => {
+    return character == '0';
+}
 
 export {
     invalidKingUnderAttackMoves,
@@ -111,5 +120,6 @@ export {
     handleMovement,
     getPieceMovementAlgorithm,
     transformBoard, 
-    boardCellColorHandler
+    boardCellColorHandler, 
+    isWall,
 }

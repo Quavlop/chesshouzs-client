@@ -3,7 +3,7 @@ import { Box } from "@chakra-ui/react"
 const SkillCard = ({key, data, onClickHandler, myTurn}) => {
     return <Box
         key={key}
-        bg={myTurn ? "white" : "grey"}
+        bg={myTurn && data.currentUsageCount > 0 ? "white" : "grey"}
         border="1px solid #B7C0D8"
         height="100%"
         display="flex"
@@ -13,7 +13,7 @@ const SkillCard = ({key, data, onClickHandler, myTurn}) => {
         h="100px"
         minH={0}
         onClick={() => {
-            if (!myTurn) {
+            if (!myTurn || data.currentUsageCount <= 0) {
                 return
             }
             onClickHandler(data)
