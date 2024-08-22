@@ -441,6 +441,23 @@ export async function getServerSideProps(context){
           } 
         }
 
+        const getPlayerSkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status', {
+          method : "GET",
+          headers : {
+              Authorization : `Bearer ${req.cookies?.__SESS_TOKEN}`
+          }
+        }) 
+
+        const playerSkillStatus = await getPlayerSkillStats.json()
+        if (playerSkillStatus.code != 200){
+          return {
+            redirect: {
+              destination: `/play`,
+              permanent: true,
+            },
+          } 
+        }
+
 
 
         playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
