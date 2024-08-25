@@ -18,14 +18,14 @@ import GamePanel from '@/components/main/GamePanel';
 import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
 import {transformBoard} from '@/helpers/utils/game';
 import { triggerSkills } from '@/helpers/skills/trigger'
-import { resetSkillBoardStats } from '@/helpers/utils/util'
+import { constructBuffDebuffStatusMap, resetSkillBoardStats } from '@/helpers/utils/util'
 import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
 
 
-export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats}) {
+export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -50,6 +50,9 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
   const [prevClickedChar, setPrevClickedChar] = useState({})
   const [myTurn, setMyTurn] = useState(gameDetail.myTurn)
   // const [myTurn, setMyTurn] = useState(true)
+
+  const [buffDebuffStatus, setBuffDebuffStatus] = useState(playerBuffDebuffStatus)
+  const [opponentBuffDebuffStatus, setOpponentBuffDebuffStatus] = useState(enemyBuffDebuffStatus)
 
   const [isInCheck, setIsInCheck] = useState(false)
 
@@ -205,7 +208,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
             }
           ))
         }, 
-        onMessage : (event) => {
+        onMessage : async (event) => {
             const response = JSON.parse(event.data) 
             if (response.status != "SUCCESS") {
               return  
@@ -249,6 +252,43 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
               setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
               setActiveSkillSet(null)
               setOnHoldSkill(false)
+              
+
+              // get earliest player state
+              const getPlayerSkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status?isOpponent=0', {
+                method : "GET",
+                headers : {
+                    Authorization : `Bearer ${token}`
+                }
+              }) 
+          
+              const playerSkillStatus = await getPlayerSkillStatus.json()
+              if (playerSkillStatus.code != 200){
+                  console.log("FAILS")
+                  return
+              }
+              const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus)
+              setBuffDebuffStatus(playerSkillStatusMap)
+
+              // enemy earliest player state
+              const getEnemySkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status?isOpponent=1', {
+                method : "GET",
+                headers : {
+                    Authorization : `Bearer ${token}`
+                }
+              }) 
+      
+              const enemySkillStatus = await getEnemySkillStatus.json()
+              if (playerSkillStatus.code != 200){
+                return {
+                  redirect: {
+                    destination: `/play`,
+                    permanent: true,
+                  },
+                } 
+              }
+              const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus)
+              setOpponentBuffDebuffStatus(enemySkillStatusMap)
             }
         },
         onError : () => {},
@@ -304,7 +344,22 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
     console.log(data)
   }
 
-  const triggerSkillsWrapperHandler = (skill) => {
+  const triggerSkillsWrapperHandler = async (skill) => {
+
+    const args = {
+      position : {}, 
+      gameId,
+      playerId : userData?.id, 
+    }
+
+    if (skill.autoTrigger){
+      const data = await execute(skill, gameState, args, GAME_API_REST_URL, token)
+      if (data.code != 200){
+          console.log("FAILS")
+      }
+      return
+    }
+
     const preprocess = triggerSkills(skill, playerGameStatus?.color, gameState)
     const { state } = preprocess
 
@@ -354,6 +409,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   userData={userData}
                   enemyData={enemyData} 
                   executeSkill={executeSkillWrapper}
+                  buffDebuffStatus={buffDebuffStatus}
+                  enemyBuffDebuffStatus={opponentBuffDebuffStatus}
                 />
               {/* </AspectRatio> */}
               <GamePanel 
@@ -363,6 +420,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 setOnHoldSkillHandler={setOnHoldSkillHandler}
                 resetSkillStateHandler={() => resetSkillStateWrapperHandler(gameState)}
                 activeSkillSet={activeSkillSet}
+                buffDebuffStatus={buffDebuffStatus}
                 myTurn={myTurn}
                 />
             </Flex>
@@ -441,14 +499,15 @@ export async function getServerSideProps(context){
           } 
         }
 
-        const getPlayerSkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status', {
+        // self
+        const getPlayerSkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status?isOpponent=0', {
           method : "GET",
           headers : {
               Authorization : `Bearer ${req.cookies?.__SESS_TOKEN}`
           }
         }) 
 
-        const playerSkillStatus = await getPlayerSkillStats.json()
+        const playerSkillStatus = await getPlayerSkillStatus.json()
         if (playerSkillStatus.code != 200){
           return {
             redirect: {
@@ -457,6 +516,27 @@ export async function getServerSideProps(context){
             },
           } 
         }
+        const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus)
+
+        // enemy 
+        const getEnemySkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status?isOpponent=1', {
+          method : "GET",
+          headers : {
+              Authorization : `Bearer ${req.cookies?.__SESS_TOKEN}`
+          }
+        }) 
+
+        const enemySkillStatus = await getEnemySkillStatus.json()
+        if (enemySkillStatus.code != 200){
+          return {
+            redirect: {
+              destination: `/play`,
+              permanent: true,
+            },
+          } 
+        }
+        const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus)
+
 
 
 
@@ -517,6 +597,8 @@ export async function getServerSideProps(context){
             kingData,
             gameDetail, 
             skillStats,
+            playerBuffDebuffStatus : playerSkillStatusMap,
+            enemyBuffDebuffStatus : enemySkillStatusMap,
             token : req.cookies?.__SESS_TOKEN
           }
         }

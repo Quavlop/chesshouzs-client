@@ -100,6 +100,15 @@ const invalidKingUnderAttackMoves = (kingPosition, state, player) => {
 }
 
 const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
+
+   if (target.enemyPieceFrozen){
+        return "black"
+   }
+   
+   if (target.selfPieceFrozen) {
+        return "orange"
+   }
+
    if (target.onHoldSkillClickable){
         return "pink"
    }

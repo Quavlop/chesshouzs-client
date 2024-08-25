@@ -7,9 +7,10 @@ import constants from '@/config/constants/game';
 import WebSocketConstants from '@/config/constants/websocket'
 import PlayerProfileGameCard from '../sub/PlayerProfileGameCard';
 
-const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData, executeSkill}) => {
+const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData, executeSkill, buffDebuffStatus, enemyBuffDebuffStatus}) => {
   const boardSize = gameData.boardSize;
   const squares = [];
+  console.log(buffDebuffStatus)
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
       squares.push(
@@ -22,6 +23,28 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             movable : state[row][col]?.validMove,
             onHoldSkill : state[row][col]?.onHoldSkill, 
             onHoldSkillClickable : state[row][col]?.onHoldSkillClickable,
+            selfPieceFrozen : function(){
+              var rowState, colState
+              if (playerGameStatus.color == "BLACK" ){
+                 rowState = state.length - row - 1
+                 colState = state.length - col - 1
+              } else {
+                 rowState = row 
+                 colState = col
+              }
+              return buffDebuffStatus.debuffState[constants.SKILL_FREEZING_WAND][`${rowState}-${colState}`]
+            }(),
+            enemyPieceFrozen : function(){
+              var rowState, colState
+              if (playerGameStatus.color == "BLACK" ){
+                 rowState = state.length - row - 1
+                 colState = state.length - col - 1
+              } else {
+                 rowState = row 
+                 colState = col
+              }
+              return enemyBuffDebuffStatus.debuffState[constants.SKILL_FREEZING_WAND][`${rowState}-${colState}`]
+            }(),
           }, 
           state[row][col]?.color)
         }
@@ -32,6 +55,17 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
         alignItems={"center"}
         position={"relative"}
         onClick={() => clickCoordinateHandler({row, col}, () => {
+             var rowState, colState
+             if (playerGameStatus.color == "BLACK" ){
+                rowState = state.length - row - 1
+                colState = state.length - col - 1
+             } else {
+                rowState = row 
+                colState = col
+             }
+            if (buffDebuffStatus.debuffState[constants.SKILL_FREEZING_WAND][`${rowState}-${colState}`]){
+              return
+            }
 
             if (!myTurn){
               return
