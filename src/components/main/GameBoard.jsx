@@ -6,6 +6,7 @@ import { Chessboard } from 'react-chessboard';
 import constants from '@/config/constants/game';
 import WebSocketConstants from '@/config/constants/websocket'
 import PlayerProfileGameCard from '../sub/PlayerProfileGameCard';
+import { isSquareCoveredByFog } from '@/helpers/utils/util';
 
 const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData, executeSkill, buffDebuffStatus, enemyBuffDebuffStatus}) => {
   const boardSize = gameData.boardSize;
@@ -44,6 +45,13 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                  colState = col
               }
               return enemyBuffDebuffStatus.debuffState[constants.SKILL_FREEZING_WAND][`${rowState}-${colState}`]
+            }(),
+            coveredByFog : function(){
+              const map = buffDebuffStatus.debuffState[constants.SKILL_FOG_MASTER]
+              if (playerGameStatus.color == "BLACK"){
+              return map[`${state.length - row - 1}-${state.length - col - 1}`]
+              }
+              return map[`${row}-${col}`]
             }(),
           }, 
           state[row][col]?.color)
@@ -168,7 +176,14 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                 {
                     /*TODO : change to image*/
                 }
-                {state[row][col]?.character != "." && state[row][col]?.character}
+                {
+                              //  const map = buffDebuffStatus.debuffState[constants.SKILL_FOG_MASTER]
+                              //  if (playerGameStatus.color == "BLACK"){
+                              //  return map[`${state.length - row - 1}-${state.length - col - 1}`]
+                              //  }
+                              //  return map[`${row}-${col}`]
+                }
+                {(state[row][col]?.character != "."  && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) && state[row][col]?.character}
             </Text>
         </Box>
       );

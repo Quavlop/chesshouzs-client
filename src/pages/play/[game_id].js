@@ -267,7 +267,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   console.log("FAILS")
                   return
               }
-              const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus)
+              const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, gameState.length)
               setBuffDebuffStatus(playerSkillStatusMap)
 
               // enemy earliest player state
@@ -287,7 +287,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   },
                 } 
               }
-              const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus)
+              const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, gameState.length)
               setOpponentBuffDebuffStatus(enemySkillStatusMap)
             }
         },
@@ -499,6 +499,21 @@ export async function getServerSideProps(context){
           } 
         }
 
+        playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
+        const enemyData = playerColorStub == "WHITE" ? matchDataResp.data?.blackPlayer : matchDataResp.data?.whitePlayer;
+        const myTurn = matchDataResp.data?.turn == playerColorStub;
+
+
+
+        // validate if player black then transform the stub
+        var stateStub = matchDataResp.data?.gameNotation || ""
+        if (stateStub.endsWith("|")){
+          stateStub = stateStub.slice(0, -1)
+        }
+        const stateRows = stateStub.split("|")
+        const boardSizeStub = stateRows.length
+
+
         // self
         const getPlayerSkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status?isOpponent=0', {
           method : "GET",
@@ -516,7 +531,7 @@ export async function getServerSideProps(context){
             },
           } 
         }
-        const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus)
+        const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, boardSizeStub)
 
         // enemy 
         const getEnemySkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status?isOpponent=1', {
@@ -535,24 +550,7 @@ export async function getServerSideProps(context){
             },
           } 
         }
-        const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus)
-
-
-
-
-        playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
-        const enemyData = playerColorStub == "WHITE" ? matchDataResp.data?.blackPlayer : matchDataResp.data?.whitePlayer;
-        const myTurn = matchDataResp.data?.turn == playerColorStub;
-
-
-
-        // validate if player black then transform the stub
-        var stateStub = matchDataResp.data?.gameNotation || ""
-        if (stateStub.endsWith("|")){
-          stateStub = stateStub.slice(0, -1)
-        }
-        const stateRows = stateStub.split("|")
-        const boardSizeStub = stateRows.length
+        const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, boardSizeStub)
 
 
         state = Array(boardSizeStub).fill(null).map((_, row) =>

@@ -101,10 +101,14 @@ const invalidKingUnderAttackMoves = (kingPosition, state, player) => {
 
 const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
 
+   if (target.coveredByFog) {
+        return "lime"
+   }
+
    if (target.enemyPieceFrozen){
         return "black"
    }
-   
+
    if (target.selfPieceFrozen) {
         return "orange"
    }
@@ -123,6 +127,133 @@ const isWall = (character) => {
     return character == '0';
 }
 
+const pawnCheck = (character) => {
+    if (character == constants.CHARACTER_PAWN){
+        return {
+            valid : true,
+            color : "BLACK"
+        }
+    }
+
+    if (character.toLowerCase() == constants.CHARACTER_PAWN){
+        return {
+            valid : true,
+            color : "WHITE"
+        }
+    }
+
+    return { valid : false }
+}
+
+const knightCheck = (character) => {
+    if (character == constants.CHARACTER_KNIGHT){
+        return {
+            valid : true,
+            color : "BLACK"
+        }
+    }
+
+    if (character.toLowerCase() == constants.CHARACTER_KNIGHT){
+        return {
+            valid : true,
+            color : "WHITE"
+        }
+    }
+
+    return { valid : false }
+}
+
+const kingCheck = (character) => {
+    if (character == constants.CHARACTER_KING){
+        return {
+            valid : true,
+            color : "BLACK"
+        }
+    }
+
+    if (character.toLowerCase() == constants.CHARACTER_KING){
+        return {
+            valid : true,
+            color : "WHITE"
+        }
+    }
+
+    return { valid : false }
+}
+
+const queenCheck = (character) => {
+    if (character == constants.CHARACTER_QUEEN){
+        return {
+            valid : true,
+            color : "BLACK"
+        }
+    }
+
+    if (character.toLowerCase() == constants.CHARACTER_QUEEN){
+        return {
+            valid : true,
+            color : "WHITE"
+        }
+    }
+
+    return { valid : false }
+}
+
+const bishopCheck = (character) => {
+    if (character == constants.CHARACTER_BISHOP){
+        return {
+            valid : true,
+            color : "BLACK"
+        }
+    }
+
+    if (character.toLowerCase() == constants.CHARACTER_BISHOP){
+        return {
+            valid : true,
+            color : "WHITE"
+        }
+    }
+
+    return { valid : false }
+}
+
+const rookCheck = (character) => {
+    if (character == constants.CHARACTER_ROOK){
+        return {
+            valid : true,
+            color : "BLACK"
+        }
+    }
+
+    if (character.toLowerCase() == constants.CHARACTER_ROOK){
+        return {
+            valid : true,
+            color : "WHITE"
+        }
+    }
+
+    return { valid : false }
+}
+
+const evolvedPawnCheck = (character) => {
+    if (character == constants.CHARACTER_EVOLVED_PAWN){
+        return {
+            valid : true,
+            color : "BLACK"
+        }
+    }
+
+    if (character.toLowerCase() == constants.CHARACTER_EVOLVED_PAWN){
+        return {
+            valid : true,
+            color : "WHITE"
+        }
+    }
+
+    return { valid : false }
+}
+
+
 export {
     invalidKingUnderAttackMoves,
     generateNewNotationState,
@@ -131,4 +262,11 @@ export {
     transformBoard, 
     boardCellColorHandler, 
     isWall,
+    pawnCheck, 
+    knightCheck, 
+    kingCheck, 
+    queenCheck, 
+    bishopCheck, 
+    rookCheck, 
+    evolvedPawnCheck
 }

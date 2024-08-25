@@ -19,6 +19,11 @@ const triggerSkills = (skill, playerColor, state) => {
                     if (col < skill.colLimit || col > state.length - skill.colLimit - 1){
                         continue
                     }
+                } 
+
+                if (skill.name == constants.SKILL_FOG_MASTER){
+                    newState[row][col].onHoldSkillClickable = true
+                    continue
                 }
 
                 if (newState[row][col].character != "." && playerColor == newState[row][col]?.characterColor && skill.forSelf && !skill.forEnemy){

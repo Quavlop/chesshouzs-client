@@ -38,11 +38,11 @@ const resetSkillBoardStats = (state) => {
     return newState
 }
 
-const constructBuffDebuffStatusMap = (status) => {
+const constructBuffDebuffStatusMap = (status, skillStats, boardSize) => {
     const { buffState, debuffState } = status.data 
-
     const buffMap = new Map()
     const debuffFreezingWandMap = new Map()
+    const debuffFogMasterMap = new Map()
 
     if (buffState) {
 
@@ -51,11 +51,34 @@ const constructBuffDebuffStatusMap = (status) => {
     if (debuffState) {
         if (debuffState[constants.SKILL_FREEZING_WAND]){
             var list = debuffState[constants.SKILL_FREEZING_WAND].list
-            for (let i = 0; i < list.length; i ++){
+            for (let i = 0; i < list.length; i++){
                 if (list[i].durationLeft <= 0) continue
                 debuffFreezingWandMap.set(`${list[i].position.row}-${list[i].position.col}`, true)
             }
         }
+
+        if (debuffState[constants.SKILL_FOG_MASTER]){
+            var list = debuffState[constants.SKILL_FOG_MASTER].list
+            var skill 
+            for (let i = 0; i < skillStats.data.length; i++){
+                if (skillStats.data[i].name == constants.SKILL_FOG_MASTER){
+                    skill = skillStats.data[i]
+                    break
+                }
+            }
+            for (let i = 0; i < list.length; i++){
+                var verticalUpperBound = list[i].position.row - skill.radiusY < 0 ? 0 : list[i].position.row - skill.radiusY
+                var verticalLowerBound = list[i].position.row + skill.radiusY >= boardSize ? boardSize - 1 : list[i].position.row + skill.radiusY
+
+                for (let j = verticalUpperBound; j <= verticalLowerBound; j++){
+                    for (let col = 0; col < boardSize; col++){
+                        debuffFogMasterMap.set(`${j}-${col}`, true)
+                    }
+                }
+
+            }
+        }
+
         // add more skills
     }
 
@@ -69,6 +92,8 @@ const constructBuffDebuffStatusMap = (status) => {
         newDebuffState[constants.SKILL_PARALYZER] = debuffState[constants.SKILL_PARALYZER]
     }
 
+    newDebuffState[constants.SKILL_FOG_MASTER] = Object.fromEntries(debuffFogMasterMap);
+
     return {
         buffState : newBuffState, 
         debuffState : newDebuffState,
@@ -76,12 +101,12 @@ const constructBuffDebuffStatusMap = (status) => {
 
 }
 
-function mapToObject(map) {
-    const obj = {};
-    for (let [key, value] of map.entries()) {
-        obj[key] = value;
+const isSquareCoveredByFog = (state, status, playerColor, row, col) => {
+    const map = status.debuffState[constants.SKILL_FOG_MASTER]
+    if (playerColor == "BLACK"){
+        return map[`${state.length - row - 1}-${state.length - col - 1}`]
     }
-    return obj;
+    return map[`${row}-${col}`]
 }
 
 export {
@@ -89,5 +114,6 @@ export {
     convertGameVariantToWord, 
     formatConventionalGameVariant, 
     resetSkillBoardStats, 
-    constructBuffDebuffStatusMap
+    constructBuffDebuffStatusMap, 
+    isSquareCoveredByFog,
 }
