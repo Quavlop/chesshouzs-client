@@ -249,6 +249,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
               } else {
                 setGameState(newState)
               }
+              console.log(response.data)
               setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
               setActiveSkillSet(null)
               setOnHoldSkill(false)
@@ -500,8 +501,12 @@ export async function getServerSideProps(context){
         }
 
         playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
+        console.log(response.user, matchDataResp.data)
+        console.log(playerColorStub)
         const enemyData = playerColorStub == "WHITE" ? matchDataResp.data?.blackPlayer : matchDataResp.data?.whitePlayer;
+        console.log(enemyData)
         const myTurn = matchDataResp.data?.turn == playerColorStub;
+        console.log(myTurn)
 
 
 

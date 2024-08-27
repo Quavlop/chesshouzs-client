@@ -67,6 +67,9 @@ const constructBuffDebuffStatusMap = (status, skillStats, boardSize) => {
                 }
             }
             for (let i = 0; i < list.length; i++){
+
+                if (list[i].durationLeft <= 0) continue
+
                 var verticalUpperBound = list[i].position.row - skill.radiusY < 0 ? 0 : list[i].position.row - skill.radiusY
                 var verticalLowerBound = list[i].position.row + skill.radiusY >= boardSize ? boardSize - 1 : list[i].position.row + skill.radiusY
 
@@ -104,9 +107,9 @@ const constructBuffDebuffStatusMap = (status, skillStats, boardSize) => {
 const isSquareCoveredByFog = (state, status, playerColor, row, col) => {
     const map = status.debuffState[constants.SKILL_FOG_MASTER]
     if (playerColor == "BLACK"){
-        return map[`${state.length - row - 1}-${state.length - col - 1}`]
+        return map[`${state.length - row - 1}-${state.length - col - 1}`] && state[state.length - row - 1][state.length - col - 1].character != "." && state[state.length - row - 1][state.length - col - 1].characterColor != playerColor
     }
-    return map[`${row}-${col}`]
+    return map[`${row}-${col}`] && state[row][col].character != "." && state[row][col].characterColor != playerColor
 }
 
 export {

@@ -49,10 +49,13 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             coveredByFog : function(){
               const map = buffDebuffStatus.debuffState[constants.SKILL_FOG_MASTER]
               if (playerGameStatus.color == "BLACK"){
-              return map[`${state.length - row - 1}-${state.length - col - 1}`]
+                return map[`${state.length - row - 1}-${state.length - col - 1}`] && state[state.length - row - 1][state.length - col - 1].characterColor != playerGameStatus.color
               }
-              return map[`${row}-${col}`]
+              return map[`${row}-${col}`] && state[row][col].characterColor != playerGameStatus.color
             }(),
+            isWall : function(){
+              return state[row][col].character == "0"
+            }()
           }, 
           state[row][col]?.color)
         }
@@ -172,7 +175,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                 src='/logo/logo.png'
                 objectFit={"cover"}
             /> */}
-            <Text textAlign={"center"} position={"absolute"} color="red">
+            <Text textAlign={"center"} position={"absolute"} color="black">
                 {
                     /*TODO : change to image*/
                 }
@@ -183,7 +186,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                               //  }
                               //  return map[`${row}-${col}`]
                 }
-                {(state[row][col]?.character != "."  && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) && state[row][col]?.character}
+                {((state[row][col]?.character != "."  && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) || (state[row][col]?.validMove && state[row][col].character != ".")) && state[row][col]?.character}
             </Text>
         </Box>
       );

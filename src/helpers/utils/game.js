@@ -101,26 +101,34 @@ const invalidKingUnderAttackMoves = (kingPosition, state, player) => {
 
 const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
 
+   if (target.movable) {
+        return "#90ee90"
+   }
+
    if (target.coveredByFog) {
-        return "lime"
+        return "#75663b"
    }
 
    if (target.enemyPieceFrozen){
-        return "black"
+        return "#f76a8b"
    }
 
    if (target.selfPieceFrozen) {
-        return "orange"
+        return "#B3B3B3"
    }
 
    if (target.onHoldSkillClickable){
         return "pink"
    }
+
+   if (target.isWall){
+        return "black"
+   }
 //    if (target.onHoldSkill){
 //         return "lime"
 //    }
-   if (target.movable) return "yellow"
-   return clickCoordinate.row == target.row && clickCoordinate.col == target.col ? "red" : defaultColor
+
+   return clickCoordinate.row == target.row && clickCoordinate.col == target.col ? "#FFD700" : defaultColor
 }
 
 const isWall = (character) => {
