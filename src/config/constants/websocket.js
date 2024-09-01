@@ -5,6 +5,7 @@ const constants = {
 
     WS_EVENT_UPDATE_GAME_STATE : "UPDATE_GAME_STATE", 
     WS_EVENT_GAME_PUBLISH_ACTION : "GAME_PUBLISH_ACTION",
+    WS_EVENT_END_GAME : "END_GAME",
 }
 
 export default constants

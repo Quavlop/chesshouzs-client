@@ -137,7 +137,6 @@ export default function Play({userData, serverFailure = false}) {
   //   script.onload = () => {
   //     if (typeof window !== 'undefined' && window.snap) {
   //       window.snap.pay(MIDTRANS_CLIENT_KEY);
-  //       console.log(MIDTRANS_CLIENT_KEY);
   //     }
   //   };
 

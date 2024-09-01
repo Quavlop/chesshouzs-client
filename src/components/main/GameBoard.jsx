@@ -1,6 +1,6 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image, AspectRatio } from '@chakra-ui/react';
-import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves, transformBoard} from "@/helpers/utils/game"
-import { checkIfKingStillHasValidMoves } from '@/helpers/utils/movement';
+import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves, kingCheck, transformBoard} from "@/helpers/utils/game"
+import { checkEliminateKingAttackerMoves, checkIfKingStillHasValidMoves } from '@/helpers/utils/movement';
 import { generateNewNotationState } from '@/helpers/utils/game';
 import { Chessboard } from 'react-chessboard';
 import constants from '@/config/constants/game';
@@ -8,10 +8,9 @@ import WebSocketConstants from '@/config/constants/websocket'
 import PlayerProfileGameCard from '../sub/PlayerProfileGameCard';
 import { isSquareCoveredByFog } from '@/helpers/utils/util';
 
-const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData, executeSkill, buffDebuffStatus, enemyBuffDebuffStatus}) => {
+const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordinateHandler, prevClickedChar, setPrevClickedCharHandler, myTurn, setMyTurnHandler, isInCheck, setIsInCheckHandler, playerGameStatus, setPlayerGameStatusHandler, gameData, wsConn, userData, executeSkill, buffDebuffStatus, enemyBuffDebuffStatus, triggerEndGameWrapper}) => {
   const boardSize = gameData.boardSize;
   const squares = [];
-  console.log(buffDebuffStatus)
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
       squares.push(
@@ -127,21 +126,31 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             setPrevClickedCharHandler({...newState[row][col], row, col})
 
             var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
-            if (invalidKingMoves.size > 0){ // means that king is in check
+            console.log(invalidKingMoves.map.size)
+            if (invalidKingMoves.map.size > 0){ // means that king is in check
+              if (!kingCheck(newState[row][col].character).valid){
+                  newState = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source)
+              }
+              console.log(" KING IS IN CHECK")
               setIsInCheckHandler(true)
+            } else {
+              setIsInCheckHandler(false)
             }
+
 
             if ((newState[row][col]?.character == constants.CHARACTER_KING || newState[row][col]?.character == constants.CHARACTER_KING.toUpperCase()) && newState[row][col]?.characterColor == playerGameStatus.color){
               setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
                 ...playerGameStatus.kingPosition, row, col
               }})
-              for (const cell of invalidKingMoves.keys()) {
+              for (const cell of invalidKingMoves.map.keys()) {
+                console.log("HHE", cell)
                 newState[cell.row][cell.col].validMove = false
               } 
-              var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
-              if (!stillHaveValidMoves){
-                console.log("CHECKMATED")
-              }
+            //   var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
+            //   if (!stillHaveValidMoves){
+            //     console.log("CHECKMATED")
+            //     triggerEndGameWrapper()
+            //   }
             } 
 
 

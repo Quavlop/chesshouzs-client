@@ -5,13 +5,6 @@ const execute = async (skill, state, args, endpoint, token) => {
     // const skillMap = skillMap()
     // const handler = skillMap.get(skill.name)
     args.skillId = skill.id
-    console.log({
-        skillId : args.skillId, 
-        state : generateNewNotationState(state), 
-        position : args.position, 
-        playerId : args.playerId, 
-        gameId : args.gameId,  
-    })
     const response = await fetch(endpoint + "/v1/match/skills/execute/" + skill.id, {
         method : "POST",
         headers : {
@@ -29,7 +22,6 @@ const execute = async (skill, state, args, endpoint, token) => {
     })
 
     const data = await response.json() 
-    console.log(data)
     return data
     // return await handler(state, args)
 }

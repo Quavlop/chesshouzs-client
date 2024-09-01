@@ -1,6 +1,7 @@
 import constants from "@/config/constants/game";
 import { LinkedList, Node } from "./linked_list";
-import { isWall } from "./game";
+import { isWall, kingCheck } from "./game";
+import { setConfig } from "next/config";
 
 const noMovement = (position, state, playerColor) => {
     const boardSize = state.length
@@ -28,10 +29,15 @@ const pawnMovement = (position, state, playerColor) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            // if (row == 9 || row == 10){
-            //     console.log(row, !disableMovement, pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState, playerColor), !newState[row][col].characterColor, position.characterColor != newState[row][col].characterColor)
-            // }
             if (!disableMovement && !isWall(newState[row][col].character) && (pawnStraightMovementValidator(position, {row, col}, newState[row][col], newState, playerColor) || pawnKillMovementValidator(position, {row, col}, newState[row][col], playerColor)) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor)){
+
+                // first pawn move 
+                if (position.row != boardSize - 3){
+                    if (Math.abs(row - position.row) == 2){
+                        continue
+                    }
+                }
+
                 newState[row][col].validMove = true
             }
         }
@@ -41,7 +47,6 @@ const pawnMovement = (position, state, playerColor) => {
 }
 const kingMovement = (position, state, playerColor) => {
     const boardSize = state.length
-
     var newState = state.map(row => row.slice());
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
@@ -410,6 +415,106 @@ const straightMovementValidator = (characterPosition, clickablePosition, status)
     return characterPosition.row == clickablePosition.row ^ characterPosition.col == clickablePosition.col
 }
 
+// firstPierce / secondPiece {row, col}
+const isTwoPositionFaceToFaceFlat = (state, firstPiece, secondPiece, kingColor) => {
+    if (firstPiece.row == secondPiece.row){
+        const start = Math.min(firstPiece.col, secondPiece.col)
+        const end = Math.max(firstPiece.col, secondPiece.col)
+        for (let col = start + 1; col < end; col++){
+            if (state[firstPiece.row][col].character != "."){
+                var king = kingCheck(state[firstPiece.row][col].character)
+                if (king.valid && king.color == kingColor){
+                    continue
+                }
+                return false
+            }
+        }
+        return true
+    } else if (firstPiece.col == secondPiece.col){
+        const start = Math.min(firstPiece.row, secondPiece.row)
+        const end = Math.max(firstPiece.row, secondPiece.row)
+        for (let row = start + 1; row < end; row++){
+            if (state[row][firstPiece.col].character != "."){
+                var king = kingCheck(state[row][firstPiece.col].character)
+                if (king.valid && king.color == kingColor){
+                    continue
+                }
+                return false
+            }
+        }
+        return true
+    }
+    return false
+}
+
+const isTwoPositionFaceToFaceDiagonal = (state, firstPiece, secondPiece, kingColor) => {
+    if (firstPiece.row == secondPiece.row || firstPiece.col == secondPiece.col){
+        return false 
+    } 
+
+
+    if (Math.abs(firstPiece.row - secondPiece.row) != Math.abs(firstPiece.col - secondPiece.col)){
+        return false
+    }
+    console.log(firstPiece, secondPiece)
+
+    if (firstPiece.row < secondPiece.row){
+        if (firstPiece.col < secondPiece.col){ // top left to bottom right
+            var nRow = firstPiece.row + 1 
+            var nCol = firstPiece.col + 1
+            while (nRow < secondPiece.row && nCol < secondPiece.col){
+                if (state[nRow++][nCol++].character != "."){
+                    var king = kingCheck(state[nRow-1][nCol-1].character)
+                    if (king.valid && king.color == kingColor){
+                        continue
+                    }
+                    return false
+                }
+            }
+        } else { // top right to bottom left 
+            var nRow = firstPiece.row + 1 
+            var nCol = firstPiece.col - 1
+            while (nRow < secondPiece.row && nCol > secondPiece.col){
+                if (state[nRow++][nCol--].character != "."){
+                    var king = kingCheck(state[nRow-1][nCol+1].character)
+                    if (king.valid && king.color == kingColor){
+                        continue
+                    }
+                    return false
+                }
+            }
+        }
+    } else {
+        if (secondPiece.col < firstPiece.col){  // bottom left to top right 
+            var nRow = secondPiece.row + 1 
+            var nCol = secondPiece.col + 1
+            while (nRow < firstPiece.row && nCol < firstPiece.col){
+                if (state[nRow++][nCol++].character != "."){
+                    var king = kingCheck(state[nRow-1][nCol-1].character)
+                    if (king.valid && king.color == kingColor){
+                        continue
+                    }
+                    return false
+                }
+            }
+        } else { // bottom right to top left
+            var nRow = secondPiece.row + 1 
+            var nCol = secondPiece.col - 1
+            while (nRow < firstPiece.row && nCol > firstPiece.col){
+                if (state[nRow++][nCol--].character != "."){
+                    var king = kingCheck(state[nRow-1][nCol+1].character)
+                    if (king.valid && king.color == kingColor){
+                        continue
+                    }
+                    return false
+                }
+            }
+        }
+    }
+
+    return true
+}
+
 const knightShapeMovementValidator = (characterPosition, clickablePosition, status) => {
     return  (Math.abs(characterPosition.row - clickablePosition.row) == 2)  && Math.abs(characterPosition.col - clickablePosition.col) == 1
             || 
@@ -470,13 +575,15 @@ const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
                 continue 
             }
 
+
+
             if (newState[row][col].character == constants.CHARACTER_PAWN || newState[row][col].character == constants.CHARACTER_PAWN.toUpperCase()){
                 if (!pawnKillMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
                     continue
                 }
                 return true
             } else if (newState[row][col].character == constants.CHARACTER_BISHOP || newState[row][col].character == constants.CHARACTER_BISHOP.toUpperCase()){
-                if (!diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                if (!diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) || !isTwoPositionFaceToFaceDiagonal(newState, moveCandidate, {row, col}, kingColor)){
                     continue
                 }
 
@@ -554,7 +661,7 @@ const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
 
 
             } else if (newState[row][col].character == constants.CHARACTER_ROOK || newState[row][col].character == constants.CHARACTER_ROOK.toUpperCase()) {
-                if (!straightMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                if (!straightMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) || !isTwoPositionFaceToFaceFlat(newState, moveCandidate, {row, col}, kingColor)){
                     continue
                 }
 
@@ -598,12 +705,18 @@ const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
                 }
 
             } else if (newState[row][col].character == constants.CHARACTER_QUEEN || newState[row][col].character == constants.CHARACTER_QUEEN.toUpperCase()) {
-                if (!straightMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) && !diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState)){
+                if (!straightMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) && !diagonalMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState) ||
+                (
+                    !isTwoPositionFaceToFaceDiagonal(newState, moveCandidate, {row, col}, kingColor)
+                    && 
+                    !isTwoPositionFaceToFaceFlat(newState, moveCandidate, {row, col}, kingColor)
+                )
+            ){
                     continue
                 }
 
                    // straight move handler
-                   if (moveCandidate.row == row){
+                if (moveCandidate.row == row){
                     if (col > moveCandidate.col){ // if rook on the right, king on the left then invert the direction 
                         for (let iCol = col; iCol >= moveCandidate.col; iCol--){
                             if (iCol == col) continue
@@ -1044,24 +1157,24 @@ const checkKingVerticalAttacker = (boardSize, kingPosition, newState, player) =>
     if (kingNode){
         if (!kingNode.prev){ // king is on left-side edge 
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.next.data}
             }
         }  else if (!kingNode.next){ // king is on right-side edge
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         } else { // in between
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.next.data}
             }
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         }
     
     }
 
-    return new Map()
+    return {map : new Map()}
 }
 
 const checkKingHorizontalAttacker = (boardSize, kingPosition, newState, player) => {
@@ -1096,27 +1209,25 @@ const checkKingHorizontalAttacker = (boardSize, kingPosition, newState, player) 
             invalidKingMoves.set({row : kingPosition.row, col}, true)
         }
     }  
-    // console.log(charLineList)
-    // console.log(kingNode)
     if (kingNode){
         if (!kingNode.prev){ // king is on left-side edge 
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves, source : kingNode.next.data}
             }
         }  else if (!kingNode.next){ // king is on right-side edge
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         } else { // in between
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.next.data}
             }
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         }
     }
-    return new Map()
+    return {map : new Map()}
 }
 
 
@@ -1168,22 +1279,22 @@ const  checkKingDownToBottomRightDiagonalAttacker = (boardSize, kingPosition, ne
     if (kingNode){
         if (!kingNode.prev){ // king is on left-side edge 
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.next.data}
             }
         }  else if (!kingNode.next){ // king is on right-side edge
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         } else { // in between
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.next.data}
             }
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         }
     }
-    return new Map()
+    return {map : new Map()}
 }
 
 
@@ -1235,22 +1346,22 @@ const checkKingBottomToUpRightDiagonalAttacker = (boardSize, kingPosition, newSt
     if (kingNode){
         if (!kingNode.prev){ // king is on left-side edge 
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.next.data}
             }
         }  else if (!kingNode.next){ // king is on right-side edge
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         } else { // in between
             if (kingNode.next && possibleAttackers.includes(kingNode.next.data.character) && kingNode.data.characterColor != kingNode.next.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.next.data}
             }
             if (kingNode.prev && possibleAttackers.includes(kingNode.prev.data.character) && kingNode.data.characterColor != kingNode.prev.data.characterColor){
-                return invalidKingMoves
+                return {map : invalidKingMoves,  source : kingNode.prev.data}
             }
         }
     } 
-    return new Map()
+    return {map : new Map()}
 }
 
 
@@ -1268,6 +1379,8 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
 
     var knightAttackerPositions = []
     var invalidKingMoves = new Map()
+    var source = []
+
 
     for (let fn of knightAttackList){
         const square = fn(kingPosition.row, kingPosition.col) 
@@ -1277,8 +1390,15 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
         } 
         if ((newState[row][col].character == constants.CHARACTER_KNIGHT || newState[row][col].character == constants.CHARACTER_KNIGHT.toUpperCase()) && newState[row][col].characterColor != player.color){
             knightAttackerPositions.push({row, col})
+            source.push({
+                character : newState[row][col].character,
+                characterColor : newState[row][col].characterColor, 
+                row,
+                col,
+            })
         }
     } 
+
 
     for (let knight of knightAttackerPositions){
         for (let fn of knightAttackList){
@@ -1290,21 +1410,28 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
             invalidKingMoves.set({row, col}, true)
         } 
     }
-    return invalidKingMoves
+    return {map : invalidKingMoves, source}
 } 
 
 const checkPawnAttackers = (boardSize, kingPosition, newState, player) => {
+    var source = []
     var invalidKingMoves = new Map()
     for (let row = 0; row < boardSize; row++){
         for (let col = 0; col < boardSize; col++) {
             if (newState[row][col].character == constants.CHARACTER_PAWN || newState[row][col].character == constants.CHARACTER_PAWN.toUpperCase()){
                 if (pawnKillMovementValidator({row, col, characterColor : player.color == "BLACK" ? "WHITE" : "BLACK"}, {row : kingPosition.row, col : kingPosition.col}, newState)){
                     invalidKingMoves.set({row, col}, true)
+                    source.push({
+                        character : newState[row][col].character,
+                        characterColor : newState[row][col].characterColor, 
+                        row,
+                        col,
+                    })
                 }
             }
         }
     }
-    return invalidKingMoves
+    return {map : invalidKingMoves, source}
 }
 
 const checkIfKingStillHasValidMoves = (newState) => {
@@ -1317,6 +1444,26 @@ const checkIfKingStillHasValidMoves = (newState) => {
         }
     }   
     return false
+}
+
+const checkEliminateKingAttackerMoves = (state, source) => {
+    const boardSize = state.length
+
+    var newState = state.map(row => row.slice());
+    for (let row = 0; row < boardSize; row++) {
+        for (let col = 0; col < boardSize; col++) {
+            if (newState[row][col].validMove){
+                for (let i = 0; i < source.length; i++){
+                    if (source[i] == undefined || source[i] == null) continue
+                    if (source[i].row != row || source[i].col != col) {
+                        newState[row][col].validMove = false
+                    }
+                }
+            }
+        }
+    }
+
+    return newState     
 }
 
 export {
@@ -1334,5 +1481,6 @@ export {
     queenMovement, 
     bishopMovement, 
     rookMovement, 
-    evolvedPawnMovement
+    evolvedPawnMovement, 
+    checkEliminateKingAttackerMoves,
 }

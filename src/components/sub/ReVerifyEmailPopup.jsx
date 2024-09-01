@@ -22,7 +22,6 @@ export default function ReVerifyEmailPopup({resendEmailVerificationLink, emailVe
 
   const [triggerNotificationBox, setTriggerNotificationBox] = useState(false);
 
-  // useEffect(() => {    console.log(resendEmailVerificationLink)}, []);
 
   useEffect(() => {
     setTriggerNotificationBox(true);

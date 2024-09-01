@@ -3,7 +3,6 @@ import { resetSkillBoardStats } from "../utils/util";
 
 const triggerSkills = (skill, playerColor, state) => {  
     var newState = resetSkillBoardStats(state)
-    console.log(skill)
     if (!skill.autoTrigger){
         for (let row = 0; row < state.length; row++) {
             for (let col = 0; col < state.length; col++) {
@@ -51,4 +50,22 @@ const triggerSkills = (skill, playerColor, state) => {
     }
 }
 
-export { triggerSkills }
+const triggerEndGame = async (endpoint, gameId, token, winnerId, type) => {
+    const response = await fetch(endpoint + "/v1/match/end/" + gameId, {
+        method : "POST",
+        headers : {
+          'Content-Type' : 'application/json',
+          Authorization : `Bearer ${token}`
+        },
+        credentials : 'include',
+        body : JSON.stringify({
+            winnerId, 
+            type,
+        })
+    })
+
+    const data = await response.json() 
+    return data
+}
+
+export { triggerSkills, triggerEndGame }

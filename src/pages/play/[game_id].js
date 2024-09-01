@@ -16,13 +16,14 @@ import Overlay from '@/components/sub/Overlay';
 import GameBoard from '@/components/main/GameBoard';
 import GamePanel from '@/components/main/GamePanel';
 import ReVerifyEmailPopup from '@/components/sub/ReVerifyEmailPopup';
-import {transformBoard} from '@/helpers/utils/game';
-import { triggerSkills } from '@/helpers/skills/trigger'
+import {findKing, handleMovement, invalidKingUnderAttackMoves, isWall, kingCheck, pawnCheck, transformBoard} from '@/helpers/utils/game';
+import { triggerEndGame, triggerSkills } from '@/helpers/skills/trigger'
 import { constructBuffDebuffStatusMap, resetSkillBoardStats } from '@/helpers/utils/util'
 import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
+import { checkIfKingStillHasValidMoves } from '@/helpers/utils/movement'
 
 
 export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
@@ -228,8 +229,10 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   Array(boardSize).fill(null).map((_, col) => {
                     var cellData = {
                       character : stateRows[row][col] || ".", 
-                      characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
-                      inDefaultPosition : stateRows[row][col] != null ? true : null,
+                      characterColor :  (stateRows[row][col] != "." && stateRows[row][col] != "0") && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
+                      inDefaultPosition : function(){
+                        return stateRows[row][col] != null ? true : null
+                      }(),
                       image : "",
                       color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
                     }
@@ -248,9 +251,55 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 setGameState(newState)
               } else {
                 setGameState(newState)
-              }
-              console.log(response.data)
+              } 
+
+              // check & checkmate auto check
+              // TODO : trigger pas refresh
+
+              const king = findKing(newState, playerGameStatus.color)
+
+              // automate checkmate and incheck
+              if (king.row && king.col){
+                var row = king.row 
+                var col = king.col
+
+                newState = handleMovement(newState[row][col]?.character, {
+                  row, col, 
+                  character : newState[row][col]?.character, 
+                  characterColor : newState[row][col]?.characterColor,
+                  validMove : newState[row][col]?.validMove,
+                }, newState, playerGameStatus.color)
+
+                setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
+                  ...playerGameStatus.kingPosition, row : king.row, col : king.col
+                }})
+
+                var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
+                if (invalidKingMoves.map.size > 0){ // means that king is in check
+                  if (!kingCheck(newState[row][col].character).valid){
+                    newState = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source)
+                  }
+                  setIsInCheckHandler(true)
+                } else {
+                  setIsInCheckHandler(false)
+                }
+
+                for (const cell of invalidKingMoves.map.keys()) {
+                  newState[cell.row][cell.col].validMove = false
+                } 
+                var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
+                if (!stillHaveValidMoves){
+                  console.log("CHECKMATED")
+                  // triggerEndGameWrapper(gameId, token, enemyData.id, "CHECKMATE")
+                  // return
+                }
+              } 
+
+
+
+
               setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
+              console.log("WKWKz")
               setActiveSkillSet(null)
               setOnHoldSkill(false)
               
@@ -281,15 +330,14 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
       
               const enemySkillStatus = await getEnemySkillStatus.json()
               if (playerSkillStatus.code != 200){
-                return {
-                  redirect: {
-                    destination: `/play`,
-                    permanent: true,
-                  },
-                } 
+                console.log("FAILS")
+                return
               }
               const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, gameState.length)
               setOpponentBuffDebuffStatus(enemySkillStatusMap)
+            } else if (response.event == WebSocketConstants.WS_EVENT_END_GAME) {
+                console.log("end_game")
+                setOverlay(true)
             }
         },
         onError : () => {},
@@ -308,6 +356,15 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
   useEffect(() => {
   }, [gameState]) 
+
+  const triggerEndGameWrapper = async (gameId, token, winnerId = "", type) => {
+      const data = await triggerEndGame(GAME_API_REST_URL ,gameId, token, winnerId, type)
+      if (data.code != 200){
+        console.log("Fails") 
+        return
+      }
+      console.log(data)
+  }
 
   const executeSkillWrapper = async (position) => {
     /*
@@ -412,6 +469,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   executeSkill={executeSkillWrapper}
                   buffDebuffStatus={buffDebuffStatus}
                   enemyBuffDebuffStatus={opponentBuffDebuffStatus}
+                  triggerEndGameWrapper={() => triggerEndGameWrapper(gameId, token, enemyData.id, "CHECKMATE")}
                 />
               {/* </AspectRatio> */}
               <GamePanel 
@@ -501,12 +559,8 @@ export async function getServerSideProps(context){
         }
 
         playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
-        console.log(response.user, matchDataResp.data)
-        console.log(playerColorStub)
         const enemyData = playerColorStub == "WHITE" ? matchDataResp.data?.blackPlayer : matchDataResp.data?.whitePlayer;
-        console.log(enemyData)
         const myTurn = matchDataResp.data?.turn == playerColorStub;
-        console.log(myTurn)
 
 
 
@@ -562,8 +616,10 @@ export async function getServerSideProps(context){
             Array(boardSizeStub).fill(null).map((_, col) => {
               var cellData = {
                 character : stateRows[row][col] || ".", 
-                characterColor :  stateRows[row][col] != "." && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
-                inDefaultPosition : stateRows[row][col] != null ? true : null,
+                characterColor :  (stateRows[row][col] != "." && stateRows[row][col] != "0") && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
+                inDefaultPosition : function(){
+                  return stateRows[row][col] != null ? true : null
+                }(),
                 image : "",
                 color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
               }
@@ -577,6 +633,7 @@ export async function getServerSideProps(context){
               return cellData
             })
         )  
+
 
         if (playerColorStub == "BLACK"){
           state = transformBoard(state)

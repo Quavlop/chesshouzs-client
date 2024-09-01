@@ -95,8 +95,16 @@ const invalidKingUnderAttackMoves = (kingPosition, state, player) => {
     const invalidMovesCausedByKnight = checkKnightAttacker(state.length, kingPosition, state, player)
     const invalidMovesCausedByPawn = checkPawnAttackers(state.length, kingPosition, state, player)
     
-    const invalidMoves = mergeMaps(invalidHorizontalMoves, invalidVerticalMoves, invalidBottomToUpRightDiagonalMoves, invalidUpToDownRightDiagonalMoves, invalidMovesCausedByKnight, invalidMovesCausedByPawn)
-    return invalidMoves
+    const invalidMoves = mergeMaps(invalidHorizontalMoves.map, invalidVerticalMoves.map, invalidBottomToUpRightDiagonalMoves.map, invalidUpToDownRightDiagonalMoves.map, invalidMovesCausedByKnight.map, invalidMovesCausedByPawn.map)
+    const source = [
+        invalidHorizontalMoves.source, 
+        invalidVerticalMoves.source, 
+        invalidBottomToUpRightDiagonalMoves.source, 
+        invalidUpToDownRightDiagonalMoves.source, 
+        ...invalidMovesCausedByKnight.source, 
+        ...invalidMovesCausedByPawn.source
+    ]
+    return {map : invalidMoves, source}
 }
 
 const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
@@ -261,6 +269,26 @@ const evolvedPawnCheck = (character) => {
     return { valid : false }
 }
 
+const findKing = (newState, playerColor) => {
+
+    if (newState.length <= 0){
+        return null
+    }
+
+    const boardSize = newState[0].length
+
+    for (let row = 0; row < boardSize; row++){
+        for (let col = 0; col < boardSize; col++){
+            var king = kingCheck(newState[row][col].character)
+            if (king.valid && king.color == playerColor){
+              return {row, col}
+            }
+        }
+    }
+    
+    return {row : null, col : null}
+}
+
 
 export {
     invalidKingUnderAttackMoves,
@@ -276,5 +304,6 @@ export {
     queenCheck, 
     bishopCheck, 
     rookCheck, 
-    evolvedPawnCheck
+    evolvedPawnCheck, 
+    findKing,
 }
