@@ -125,11 +125,22 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
             setPrevClickedCharHandler({...newState[row][col], row, col})
 
-            var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
-            console.log(invalidKingMoves.map.size)
+            var king = kingCheck(newState[row][col].character)
+            if (king.valid && king.color == playerGameStatus.color){
+              setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
+                ...playerGameStatus.kingPosition, row, col
+              }})
+            }
+
+            // if (playerGameStatus.color == "WHITE") {
+
+            // }
+
+            var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState, playerGameStatus)
             if (invalidKingMoves.map.size > 0){ // means that king is in check
-              if (!kingCheck(newState[row][col].character).valid){
-                  newState = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source)
+              if (!king.valid){
+                console.log(invalidKingMoves.source)
+                  newState = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition)
               }
               console.log(" KING IS IN CHECK")
               setIsInCheckHandler(true)
@@ -138,20 +149,26 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             }
 
 
-            if ((newState[row][col]?.character == constants.CHARACTER_KING || newState[row][col]?.character == constants.CHARACTER_KING.toUpperCase()) && newState[row][col]?.characterColor == playerGameStatus.color){
-              setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
-                ...playerGameStatus.kingPosition, row, col
-              }})
+            // if ((newState[row][col]?.character == constants.CHARACTER_KING || newState[row][col]?.character == constants.CHARACTER_KING.toUpperCase()) && newState[row][col]?.characterColor == playerGameStatus.color){
               for (const cell of invalidKingMoves.map.keys()) {
-                console.log("HHE", cell)
+                if (newState[cell.row][cell.col].interceptable){
+                  continue
+                }
                 newState[cell.row][cell.col].validMove = false
-              } 
+              // } 
             //   var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
             //   if (!stillHaveValidMoves){
             //     console.log("CHECKMATED")
             //     triggerEndGameWrapper()
             //   }
             } 
+
+            // for (let row = 0; row < boardSize; row++) {
+            //   for (let col = 0; col < boardSize; col++) {
+            //       if (newState[row][col].validMove &&)
+            //   }
+            // }
+
 
 
             var stateNotation 

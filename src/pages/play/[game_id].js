@@ -246,6 +246,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                     return cellData
                   })
               )  
+
               if (playerGameStatus.color == "BLACK"){
                 newState = transformBoard(newState) 
                 setGameState(newState)
@@ -253,10 +254,11 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 setGameState(newState)
               } 
 
+              const king = findKing(newState, playerGameStatus.color)
+
               // check & checkmate auto check
               // TODO : trigger pas refresh
 
-              const king = findKing(newState, playerGameStatus.color)
 
               // automate checkmate and incheck
               if (king.row && king.col){
@@ -270,11 +272,21 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   validMove : newState[row][col]?.validMove,
                 }, newState, playerGameStatus.color)
 
-                setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
-                  ...playerGameStatus.kingPosition, row : king.row, col : king.col
-                }})
+                if (playerGameStatus.color == "WHITE"){
+                  setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
+                    ...playerGameStatus.kingPosition, row : king.row, col : king.col
+                  }})
+                } else {
+                  setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
+                    ...playerGameStatus.kingPosition, row : newState.length - king.row - 1, col : newState.length - king.col - 1
+                  }})
+                }
 
                 var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
+                console.log(playerGameStatus.kingPosition)
+                for (const cell of invalidKingMoves.map.keys()) {
+                  console.log("HHE", cell)
+                } 
                 if (invalidKingMoves.map.size > 0){ // means that king is in check
                   if (!kingCheck(newState[row][col].character).valid){
                     newState = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source)
@@ -623,12 +635,9 @@ export async function getServerSideProps(context){
                 image : "",
                 color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
               }
-              if ((stateRows[row][col] == constants.CHARACTER_KING || stateRows[row][col] == constants.CHARACTER_KING.toUpperCase()) && cellData.characterColor == playerColorStub){
-                kingData = {
-                  inDefaultPosition : cellData.inDefaultPosition, 
-                  row, col 
-                }
-              }
+              // if ((stateRows[row][col] == constants.CHARACTER_KING || stateRows[row][col] == constants.CHARACTER_KING.toUpperCase()) && cellData.characterColor == playerColorStub){
+  
+              // }
 
               return cellData
             })
@@ -637,6 +646,14 @@ export async function getServerSideProps(context){
 
         if (playerColorStub == "BLACK"){
           state = transformBoard(state)
+        }
+
+        const king = findKing(state, playerColorStub)
+        if (king.row && king.col){
+          kingData = {
+            inDefaultPosition : true, 
+            row : king.row, col : king.col
+          }
         }
         
 
