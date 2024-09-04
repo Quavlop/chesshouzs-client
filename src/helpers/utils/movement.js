@@ -1,6 +1,6 @@
 import constants from "@/config/constants/game";
 import { LinkedList, Node } from "./linked_list";
-import { bishopCheck, isWall, kingCheck, pawnCheck, queenCheck, rookCheck } from "./game";
+import { bishopCheck, isWall, kingCheck, knightCheck, pawnCheck, queenCheck, rookCheck } from "./game";
 import { setConfig } from "next/config";
 
 const noMovement = (position, state, playerColor) => {
@@ -1387,6 +1387,15 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
     for (let fn of knightAttackList){
         const square = fn(kingPosition.row, kingPosition.col) 
         const { row, col } = square 
+
+        if (newState[row][col]){
+            const knight = knightCheck(newState[row][col].character)
+            if (knight.valid && knight.color == player.color){
+                continue
+            }
+        }
+
+
         if (row < 0 || col < 0 || row >= boardSize || col >= boardSize){
             continue
         } 
@@ -1422,7 +1431,7 @@ const checkPawnAttackers = (boardSize, kingPosition, newState, player) => {
         for (let col = 0; col < boardSize; col++) {
             var pawn = pawnCheck(newState[row][col].character)
             if (pawn.valid && pawn.color != player.color){
-                if (pawnKillMovementValidator({row, col, characterColor : player.color}, {row : kingPosition.row, col : kingPosition.col}, newState, player.color)){
+                if (pawnKillMovementValidator({row, col, characterColor : player.color == "BLACK" ? "WHITE" : "BLACK"}, {row : kingPosition.row, col : kingPosition.col}, newState, player.color)){
                     invalidKingMoves.set({row, col}, true)
                     source.push({
                         character : newState[row][col].character,

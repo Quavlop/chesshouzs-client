@@ -271,16 +271,17 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   characterColor : newState[row][col]?.characterColor,
                   validMove : newState[row][col]?.validMove,
                 }, newState, playerGameStatus.color)
+                console.log(king.row, king.col, "EEHEH")
 
-                if (playerGameStatus.color == "WHITE"){
+                // if (playerGameStatus.color == "WHITE"){
                   setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
                     ...playerGameStatus.kingPosition, row : king.row, col : king.col
                   }})
-                } else {
-                  setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
-                    ...playerGameStatus.kingPosition, row : newState.length - king.row - 1, col : newState.length - king.col - 1
-                  }})
-                }
+                // } else {
+                  // setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
+                    // ...playerGameStatus.kingPosition, row : newState.length - king.row - 1, col : newState.length - king.col - 1
+                  // }})
+                // }
 
                 var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
                 console.log(playerGameStatus.kingPosition)
@@ -306,6 +307,12 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   // return
                 }
               } 
+
+              for (let row = 0; row < boardSize; row++){
+                for (let col = 0; col < boardSize; col++){
+                   newState[row][col].validMove = false
+                }
+              }
 
 
 
