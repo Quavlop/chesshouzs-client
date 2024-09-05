@@ -1,6 +1,6 @@
 import constants from "@/config/constants/game";
 import { LinkedList, Node } from "./linked_list";
-import { bishopCheck, isWall, kingCheck, knightCheck, pawnCheck, queenCheck, rookCheck } from "./game";
+import { bishopCheck, evolvedPawnCheck, isWall, kingCheck, knightCheck, pawnCheck, queenCheck, rookCheck } from "./game";
 import { setConfig } from "next/config";
 
 const noMovement = (position, state, playerColor) => {
@@ -579,7 +579,7 @@ const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
             if (newState[row][col].character == constants.CHARACTER_PAWN || newState[row][col].character == constants.CHARACTER_PAWN.toUpperCase()){
                 var pawn = pawnCheck(newState[row][col].character)
                 if (pawn.valid && pawn.color != kingColor){
-                    if (!pawnKillMovementValidator({row, col, characterColor : kingColor}, {row : moveCandidate.row, col : moveCandidate.col}, newState, kingColor)){
+                    if (!pawnKillMovementValidator({row, col, characterColor : kingColor == "BLACK" ? "WHITE" : "BLACK"}, {row : moveCandidate.row, col : moveCandidate.col}, newState, kingColor)){
                         continue
                     }
                 }
@@ -838,6 +838,13 @@ const kingUnsafePositionHandler = (kingColor, moveCandidate, state) => {
                     continue
                 }
                 return true
+            } else if (newState[row][col].character == constants.CHARACTER_EVOLVED_PAWN || newState[row][col].character == constants.CHARACTER_EVOLVED_PAWN.toUpperCase()){
+                var evolvedPawn = evolvedPawnCheck(newState[row][col].character)
+                if (evolvedPawn.valid && evolvedPawn.color != kingColor){
+                    if (Math.abs(moveCandidate.col - col) <= 1 && Math.abs(moveCandidate.row - row) <= 1){
+                        return true
+                    } 
+                }
             }
             
 
@@ -1383,12 +1390,10 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
     var invalidKingMoves = new Map()
     var source = []
 
-
     for (let fn of knightAttackList){
         const square = fn(kingPosition.row, kingPosition.col) 
         const { row, col } = square 
-
-        if (newState[row][col]){
+        if (row < newState.length && row >= 0 && col < newState.length && col >= 0){
             const knight = knightCheck(newState[row][col].character)
             if (knight.valid && knight.color == player.color){
                 continue
@@ -1432,15 +1437,31 @@ const checkPawnAttackers = (boardSize, kingPosition, newState, player) => {
             var pawn = pawnCheck(newState[row][col].character)
             if (pawn.valid && pawn.color != player.color){
                 if (pawnKillMovementValidator({row, col, characterColor : player.color == "BLACK" ? "WHITE" : "BLACK"}, {row : kingPosition.row, col : kingPosition.col}, newState, player.color)){
-                    invalidKingMoves.set({row, col}, true)
+                    console.log(row, col)
+                    // invalidKingMoves.set({row, col}, true)
                     source.push({
                         character : newState[row][col].character,
                         characterColor : newState[row][col].characterColor, 
                         row,
                         col,
                     })
+                    continue
                 }
             }
+            // var evolvedPawn = evolvedPawnCheck(newState[row][col].character)
+            // if (evolvedPawn.valid && evolvedPawn.color != player.color){
+            //     console.log(row, col, kingPosition)
+            //     if (kingMovementValidator({row, col}, {row : kingPosition.row, col : kingPosition.col}, null)){
+            //         invalidKingMoves.set({row, col}, true)
+            //         source.push({
+            //             character : newState[row][col].character,
+            //             characterColor : newState[row][col].characterColor, 
+            //             row,
+            //             col,
+            //         })
+            //         continue
+            //     }
+            // }
         }
     }
     return {map : invalidKingMoves, source}
@@ -1460,6 +1481,8 @@ const checkIfKingStillHasValidMoves = (newState) => {
 
 const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
     const boardSize = state.length
+
+    var stillHaveValidMove = false
 
     var newState = state.map(row => row.slice());
     for (let row = 0; row < boardSize; row++) {
@@ -1484,6 +1507,7 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
                         if ((row == kingPosition.row && col > minCol && col < maxCol && col != kingPosition.col) || (col == kingPosition.col && row > minRow && row < maxRow && row != kingPosition.row)){
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
+                            stillHaveValidMove = true
                         }
                         continue
                     }
@@ -1499,6 +1523,7 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
                             console.log(kingPosition, source[i], "BI")
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
+                            stillHaveValidMove = true
                         }
                         continue
                     }
@@ -1513,10 +1538,12 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
                         if ((row == kingPosition.row && col > minCol && col < maxCol && col != kingPosition.col) || (col == kingPosition.col && row > minRow && row < maxRow && row != kingPosition.row)){
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
+                            stillHaveValidMove = true
                         } else if ((col > minCol && col < maxCol && col != kingPosition.col) && (row > minRow && row < maxRow && row != kingPosition.row) && Math.abs(kingPosition.row - row) == Math.abs(kingPosition.col - col)){
                             console.log(kingPosition, source[i], "BI")
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
+                            stillHaveValidMove = true
                         }   
 
                         continue
@@ -1529,7 +1556,7 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
         }
     }
 
-    return newState     
+    return {newState, stillHaveValidMove}
 }
 
 export {

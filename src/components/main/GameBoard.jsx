@@ -140,7 +140,8 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             if (invalidKingMoves.map.size > 0){ // means that king is in check
               if (!king.valid){
                 console.log(invalidKingMoves.source)
-                  newState = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition)
+                var moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition)
+                newState = moveCheck.newState
               }
               console.log(" KING IS IN CHECK")
               setIsInCheckHandler(true)
@@ -151,6 +152,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
             // if ((newState[row][col]?.character == constants.CHARACTER_KING || newState[row][col]?.character == constants.CHARACTER_KING.toUpperCase()) && newState[row][col]?.characterColor == playerGameStatus.color){
               for (const cell of invalidKingMoves.map.keys()) {
+                console.log(cell)
                 if (newState[cell.row][cell.col].interceptable){
                   continue
                 }

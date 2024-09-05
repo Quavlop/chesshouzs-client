@@ -94,6 +94,13 @@ const invalidKingUnderAttackMoves = (kingPosition, state, player) => {
     const invalidUpToDownRightDiagonalMoves = checkKingDownToBottomRightDiagonalAttacker(state.length, kingPosition, state, player)
     const invalidMovesCausedByKnight = checkKnightAttacker(state.length, kingPosition, state, player)
     const invalidMovesCausedByPawn = checkPawnAttackers(state.length, kingPosition, state, player)
+    // console.log(invalidHorizontalMoves.map.size)
+    // console.log(invalidVerticalMoves.map.size)
+    // console.log(invalidBottomToUpRightDiagonalMoves.map.size)
+    // console.log(invalidUpToDownRightDiagonalMoves.map.size)
+    // console.log(invalidMovesCausedByKnight.map.size)
+    // console.log(invalidMovesCausedByPawn.map.size)
+
     
     const invalidMoves = mergeMaps(invalidHorizontalMoves.map, invalidVerticalMoves.map, invalidBottomToUpRightDiagonalMoves.map, invalidUpToDownRightDiagonalMoves.map, invalidMovesCausedByKnight.map, invalidMovesCausedByPawn.map)
     const source = [

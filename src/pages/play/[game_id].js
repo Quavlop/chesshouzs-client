@@ -23,7 +23,7 @@ import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
-import { checkIfKingStillHasValidMoves } from '@/helpers/utils/movement'
+import { checkEliminateKingAttackerMoves, checkIfKingStillHasValidMoves } from '@/helpers/utils/movement'
 
 
 export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
@@ -285,27 +285,47 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
                 var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
                 console.log(playerGameStatus.kingPosition)
-                for (const cell of invalidKingMoves.map.keys()) {
-                  console.log("HHE", cell)
-                } 
+
+                var moveCheck
                 if (invalidKingMoves.map.size > 0){ // means that king is in check
-                  if (!kingCheck(newState[row][col].character).valid){
-                    newState = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source)
-                  }
+                  // if (!kingCheck(newState[row][col].character).valid){
+                    moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition)
+                    newState = moveCheck.newState
+                  // }
                   setIsInCheckHandler(true)
                 } else {
+                  // moveCheck = checkEliminateKingAttackerMoves(newState, null, playerGameStatus.kingPosition)
+                  // if (!moveCheck.stillHaveValidMove){
+                  //   console.log("STALEMATE")
+                  // }
+                  // newState = moveCheck.newState
+                  // TODO : stalemate logic 
+                  // TODO : trigger endgame post request not only from ws receiver 
+                  // TODO : FE end game 
+                  // TODO : encrypt payload
                   setIsInCheckHandler(false)
                 }
 
                 for (const cell of invalidKingMoves.map.keys()) {
                   newState[cell.row][cell.col].validMove = false
                 } 
-                var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
-                if (!stillHaveValidMoves){
-                  console.log("CHECKMATED")
-                  // triggerEndGameWrapper(gameId, token, enemyData.id, "CHECKMATE")
-                  // return
+                if (invalidKingMoves.map.size > 0){
+                  var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
+                  if (!stillHaveValidMoves && !moveCheck.stillHaveValidMove){
+                    console.log("CHECKMATED")
+                    triggerEndGameWrapper(gameId, token, enemyData.id, "CHECKMATE")
+  
+  
+                    for (let row = 0; row < boardSize; row++){
+                      for (let col = 0; col < boardSize; col++){
+                         newState[row][col].validMove = false
+                      }
+                    }
+  
+                    return
+                  }
                 }
+ 
               } 
 
               for (let row = 0; row < boardSize; row++){
@@ -313,6 +333,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                    newState[row][col].validMove = false
                 }
               }
+
+              // TODO : samain logic nya di gameboard smaa disini buat cek checkmate
 
 
 
