@@ -1,6 +1,6 @@
 import constants from "@/config/constants/game";
 import { LinkedList, Node } from "./linked_list";
-import { bishopCheck, evolvedPawnCheck, isWall, kingCheck, knightCheck, pawnCheck, queenCheck, rookCheck } from "./game";
+import { bishopCheck, evolvedPawnCheck, handleMovement, isWall, kingCheck, knightCheck, pawnCheck, queenCheck, rookCheck } from "./game";
 import { setConfig } from "next/config";
 
 const noMovement = (position, state, playerColor) => {
@@ -1483,6 +1483,7 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
     const boardSize = state.length
 
     var stillHaveValidMove = false
+    var valid = false
 
     var newState = state.map(row => row.slice());
     for (let row = 0; row < boardSize; row++) {
@@ -1490,7 +1491,10 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
             if (newState[row][col].validMove){
                 console.log(row, col)
                 for (let i = 0; i < source.length; i++){
-                    if (source[i] == undefined || source[i] == null) continue
+                    if (source[i] == undefined || source[i] == null) {
+                        valid = true
+                        continue
+                    }
                     // eliminate the attacker 
                     if (source[i].row != row || source[i].col != col) {
                         newState[row][col].validMove = false
@@ -1556,7 +1560,31 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
         }
     }
 
-    return {newState, stillHaveValidMove}
+    return {newState, stillHaveValidMove, valid}
+}
+
+const isOtherPieceMovable = (state, playerColor) => {
+    for (let row = 0; row < state.length; row++){
+        for (let col = 0; col < state.length; col++){
+            if (!['0', '.', 'k', 'K'].includes(state[row][col].character) && state[row][col].characterColor == playerColor){
+                var newState = handleMovement(state[row][col]?.character, {
+                    row, col, 
+                    character : state[row][col]?.character, 
+                    characterColor : state[row][col]?.characterColor,
+                    validMove : state[row][col]?.validMove,
+                  }, state, playerColor)
+                  for (let i = 0; i < state.length; i++){
+                    for (let j = 0; j < state.length; j++){
+                        if (newState[i][j].validMove){
+                            return true
+                        }
+                    }
+                  }
+            }
+        }
+    }
+
+    return false
 }
 
 export {
@@ -1576,4 +1604,5 @@ export {
     rookMovement, 
     evolvedPawnMovement, 
     checkEliminateKingAttackerMoves,
+    isOtherPieceMovable
 }

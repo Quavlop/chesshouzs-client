@@ -23,7 +23,7 @@ import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
-import { checkEliminateKingAttackerMoves, checkIfKingStillHasValidMoves } from '@/helpers/utils/movement'
+import { checkEliminateKingAttackerMoves, checkIfKingStillHasValidMoves, isOtherPieceMovable } from '@/helpers/utils/movement'
 
 
 export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
@@ -285,15 +285,25 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
                 var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
                 console.log(playerGameStatus.kingPosition)
+                console.log(invalidKingMoves.map)
+                for (const cell of invalidKingMoves.map.keys()) {
+                  console.log(cell)
+                } 
 
                 var moveCheck
                 if (invalidKingMoves.map.size > 0){ // means that king is in check
                   // if (!kingCheck(newState[row][col].character).valid){
                     moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition)
                     newState = moveCheck.newState
+                    console.log(" KING IS IN CHECK")
+
                   // }
                   setIsInCheckHandler(true)
                 } else {
+                  // var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
+                  // if ((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK") && !isOtherPieceMovable(newState, playerGameStatus.color) && !stillHaveValidMoves){
+                  //   console.log("STALEMATE")
+                  // }
                   // moveCheck = checkEliminateKingAttackerMoves(newState, null, playerGameStatus.kingPosition)
                   // if (!moveCheck.stillHaveValidMove){
                   //   console.log("STALEMATE")
@@ -309,6 +319,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 for (const cell of invalidKingMoves.map.keys()) {
                   newState[cell.row][cell.col].validMove = false
                 } 
+
                 if (invalidKingMoves.map.size > 0){
                   var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
                   if (!stillHaveValidMoves && !moveCheck.stillHaveValidMove){
@@ -325,6 +336,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                     return
                   }
                 }
+
+
  
               } 
 
