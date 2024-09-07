@@ -408,7 +408,7 @@ const evolvedPawnMovement = (position, state, playerColor) => {
 const diagonalMovementValidator = (characterPosition, clickablePosition, status) => {
     const rowDiff = Math.abs(characterPosition.row - clickablePosition.row)
     const colDiff = Math.abs(characterPosition.col - clickablePosition.col)
-    return rowDiff == colDiff && rowDiff && colDiff
+    return rowDiff == colDiff && rowDiff > 0 && colDiff > 0
 }
 
 const straightMovementValidator = (characterPosition, clickablePosition, status) => {
@@ -1390,20 +1390,20 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
     var invalidKingMoves = new Map()
     var source = []
 
+    console.log(kingPosition)
     for (let fn of knightAttackList){
         const square = fn(kingPosition.row, kingPosition.col) 
         const { row, col } = square 
-        if (row < newState.length && row >= 0 && col < newState.length && col >= 0){
-            const knight = knightCheck(newState[row][col].character)
-            if (knight.valid && knight.color == player.color){
-                continue
-            }
-        }
-
 
         if (row < 0 || col < 0 || row >= boardSize || col >= boardSize){
             continue
         } 
+
+        const knight = knightCheck(newState[row][col].character)
+        if (knight.valid && knight.color == player.color){
+            continue
+        }
+
         if ((newState[row][col].character == constants.CHARACTER_KNIGHT || newState[row][col].character == constants.CHARACTER_KNIGHT.toUpperCase()) && newState[row][col].characterColor != player.color){
             knightAttackerPositions.push({row, col})
             source.push({
@@ -1479,7 +1479,7 @@ const checkIfKingStillHasValidMoves = (newState) => {
     return false
 }
 
-const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
+const checkEliminateKingAttackerMoves = (state, source, kingPosition, playerColor) => {
     const boardSize = state.length
 
     var stillHaveValidMove = false
@@ -1490,12 +1490,12 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
         for (let col = 0; col < boardSize; col++) {
             if (newState[row][col].validMove){
                 console.log(row, col)
+                var unconnected = false
                 for (let i = 0; i < source.length; i++){
                     if (source[i] == undefined || source[i] == null) {
                         valid = true
                         continue
                     }
-                    // eliminate the attacker 
                     if (source[i].row != row || source[i].col != col) {
                         newState[row][col].validMove = false
                     }
@@ -1504,6 +1504,7 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
                     // straight 
                     var rook = rookCheck(source[i].character)
                     if (rook.valid){
+                    // if (rook.valid && rook.color != playerColor){
                         const maxRow = Math.max(kingPosition.row, source[i].row)
                         const maxCol = Math.max(kingPosition.col, source[i].col)
                         const minRow = Math.min(kingPosition.row, source[i].row)
@@ -1512,6 +1513,8 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
                             stillHaveValidMove = true
+                        } else {
+                            // newState[row][col].validMove = false
                         }
                         continue
                     }
@@ -1519,15 +1522,17 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
                     // diagonal 
                     var bishop = bishopCheck(source[i].character)
                     if (bishop.valid){
+                    // if (bishop.valid && bishop.color != playerColor){
                         const maxRow = Math.max(kingPosition.row, source[i].row)
                         const maxCol = Math.max(kingPosition.col, source[i].col)
                         const minRow = Math.min(kingPosition.row, source[i].row)
                         const minCol = Math.min(kingPosition.col, source[i].col)
                         if ((col > minCol && col < maxCol && col != kingPosition.col) && (row > minRow && row < maxRow && row != kingPosition.row) && Math.abs(kingPosition.row - row) == Math.abs(kingPosition.col - col)){
-                            console.log(kingPosition, source[i], "BI")
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
                             stillHaveValidMove = true
+                        } else {
+                            // newState[row][col].validMove = false
                         }
                         continue
                     }
@@ -1535,27 +1540,39 @@ const checkEliminateKingAttackerMoves = (state, source, kingPosition) => {
                     // hybrid
                     var queen = queenCheck(source[i].character)
                     if (queen.valid){
+                    // if (queen.valid && queen.color != playerColor){
                         const maxRow = Math.max(kingPosition.row, source[i].row)
                         const maxCol = Math.max(kingPosition.col, source[i].col)
                         const minRow = Math.min(kingPosition.row, source[i].row)
                         const minCol = Math.min(kingPosition.col, source[i].col)
-                        if ((row == kingPosition.row && col > minCol && col < maxCol && col != kingPosition.col) || (col == kingPosition.col && row > minRow && row < maxRow && row != kingPosition.row)){
+                        // if queen attacking horizontally
+                        if (!diagonalMovementValidator({row : source[i].row, col : source[i].col}, {row : kingPosition.row, col : kingPosition.col}, null) && ((row == kingPosition.row && col > minCol && col < maxCol && col != kingPosition.col) || (col == kingPosition.col && row > minRow && row < maxRow && row != kingPosition.row))){
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
                             stillHaveValidMove = true
-                        } else if ((col > minCol && col < maxCol && col != kingPosition.col) && (row > minRow && row < maxRow && row != kingPosition.row) && Math.abs(kingPosition.row - row) == Math.abs(kingPosition.col - col)){
-                            console.log(kingPosition, source[i], "BI")
+                        } else if (diagonalMovementValidator({row : source[i].row, col : source[i].col}, {row : kingPosition.row, col : kingPosition.col}, null) && (col > minCol && col < maxCol && col != kingPosition.col) && (row > minRow && row < maxRow && row != kingPosition.row) && Math.abs(kingPosition.row - row) == Math.abs(kingPosition.col - col)){ 
+
+                            // diagonally
+                            // console.log(kingPosition, row,  Math.abs(kingPosition.row - row),  Math.abs(kingPosition.col - col))
                             newState[row][col].validMove = true
                             newState[row][col].interceptable = true
                             stillHaveValidMove = true
-                        }   
+                        } else {
+                            // if (){
+                            //     newState[row][col].validMove = true
+                            // }
+                        }
+                        // } else if (!diagonalMovementValidator({row : source[i].row, col : source[i].col}, {row : kingPosition.row, col : kingPosition.col}, null)){
+                        //     newState[row][col].validMove = true
+                        // }
 
                         continue
                     }
-                    
-
 
                 }
+                // if (!unconnected){
+                //     newState[row][col].validMove = true
+                // }
             }
         }
     }
@@ -1587,6 +1604,18 @@ const isOtherPieceMovable = (state, playerColor) => {
     return false
 }
 
+const checkIfDraw = (state) => {
+    for (let row = 0; row < state.length; row++){
+        for (let col = 0; col < state.length; col++){
+            if (kingCheck(state[row][col].character).valid) continue
+            if (!['0', '.'].includes(state[row][col].character)){
+                return false
+            }
+        }
+    }
+    return true;
+}
+
 export {
     checkKingHorizontalAttacker, 
     checkKingVerticalAttacker, 
@@ -1604,5 +1633,6 @@ export {
     rookMovement, 
     evolvedPawnMovement, 
     checkEliminateKingAttackerMoves,
-    isOtherPieceMovable
+    isOtherPieceMovable, 
+    checkIfDraw,
 }

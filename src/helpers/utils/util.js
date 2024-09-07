@@ -91,7 +91,7 @@ const constructBuffDebuffStatusMap = (status, skillStats, boardSize) => {
     var newDebuffState = {}
     newDebuffState[constants.SKILL_FREEZING_WAND] = Object.fromEntries(debuffFreezingWandMap);
 
-    if (debuffState[constants.SKILL_PARALYZER].durationLeft > 0){
+    if (debuffState[constants.SKILL_PARALYZER] &&  debuffState[constants.SKILL_PARALYZER].durationLeft > 0){
         newDebuffState[constants.SKILL_PARALYZER] = debuffState[constants.SKILL_PARALYZER]
     }
 

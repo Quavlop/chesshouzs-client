@@ -272,8 +272,6 @@ export async function getServerSideProps(context){
     const response = await isAuthenticated(API_URL, req.cookies?.__SESS_TOKEN, true);
     if (response.code == 200){
 
-      // TODO : change this validation to new backend service API
-
       // const findExistingRoom = await fetch(API_URL + `/play/online/find-existing-game`, {
         // method : "GET",
         // credentials : 'include',

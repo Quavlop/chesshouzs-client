@@ -23,7 +23,7 @@ import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
-import { checkEliminateKingAttackerMoves, checkIfKingStillHasValidMoves, isOtherPieceMovable } from '@/helpers/utils/movement'
+import { checkEliminateKingAttackerMoves, checkIfDraw, checkIfKingStillHasValidMoves, isOtherPieceMovable } from '@/helpers/utils/movement'
 
 
 export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
@@ -198,7 +198,6 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
         setOverlay(true);      
       }    
       setUser(userData);
-      // TODO : connect ws 
 
       const ws = WebSocketClient(GAME_API_WS_URL, token, {
         onOpen : () => { 
@@ -254,10 +253,14 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 setGameState(newState)
               } 
 
+              if (checkIfDraw(newState)){
+                console.log("DRAW")
+                return
+              }
+
               const king = findKing(newState, playerGameStatus.color)
 
               // check & checkmate auto check
-              // TODO : trigger pas refresh
 
 
               // automate checkmate and incheck
@@ -284,32 +287,30 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 // }
 
                 var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
-                console.log(playerGameStatus.kingPosition)
-                console.log(invalidKingMoves.map)
-                for (const cell of invalidKingMoves.map.keys()) {
-                  console.log(cell)
-                } 
-
                 var moveCheck
                 if (invalidKingMoves.map.size > 0){ // means that king is in check
                   // if (!kingCheck(newState[row][col].character).valid){
-                    moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition)
-                    newState = moveCheck.newState
+                    var kingHaveMoves = checkIfKingStillHasValidMoves(newState)
+                    if (!kingHaveMoves){
+                      moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition, playerGameStatus.color)
+                      newState = moveCheck.newState
+                    }
                     console.log(" KING IS IN CHECK")
 
                   // }
                   setIsInCheckHandler(true)
-                } else {
-                  // var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
-                  // if ((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK") && !isOtherPieceMovable(newState, playerGameStatus.color) && !stillHaveValidMoves){
-                  //   console.log("STALEMATE")
-                  // }
+                } else { // king is not in check
+
+                  var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
+                  if (((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK")) && !stillHaveValidMoves && !isOtherPieceMovable(newState, playerGameStatus.color)){
+                    // triggerEndGameWrapper(gameId, token, enemyData.id, "STALEMATE")
+                    console.log("STALEMATE")
+                  }
                   // moveCheck = checkEliminateKingAttackerMoves(newState, null, playerGameStatus.kingPosition)
                   // if (!moveCheck.stillHaveValidMove){
                   //   console.log("STALEMATE")
                   // }
                   // newState = moveCheck.newState
-                  // TODO : stalemate logic 
                   // TODO : trigger endgame post request not only from ws receiver 
                   // TODO : FE end game 
                   // TODO : encrypt payload

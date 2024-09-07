@@ -137,12 +137,19 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             // }
 
             var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState, playerGameStatus)
+            // console.log(invalidKingMoves.map.length)
+            for (let cell of invalidKingMoves.map.keys()){
+              console.log(cell)
+            }
             if (invalidKingMoves.map.size > 0){ // means that king is in check
-              if (!king.valid){
+              // if (!king.valid){
                 console.log(invalidKingMoves.source)
-                var moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition)
-                newState = moveCheck.newState
-              }
+                var king = kingCheck(newState[row][col].character)
+                if (!king.valid){
+                  var moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition, playerGameStatus.color)
+                  newState = moveCheck.newState
+                }                
+              // }
               console.log(" KING IS IN CHECK")
               setIsInCheckHandler(true)
             } else {
@@ -152,11 +159,11 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
             // if ((newState[row][col]?.character == constants.CHARACTER_KING || newState[row][col]?.character == constants.CHARACTER_KING.toUpperCase()) && newState[row][col]?.characterColor == playerGameStatus.color){
               for (const cell of invalidKingMoves.map.keys()) {
-                console.log(cell)
                 if (newState[cell.row][cell.col].interceptable){
                   continue
                 }
                 newState[cell.row][cell.col].validMove = false
+                
               // } 
             //   var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
             //   if (!stillHaveValidMoves){
