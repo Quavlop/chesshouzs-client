@@ -220,6 +220,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   state = state.slice(0,-1)
                 }
                 var newState
+                var cloneState
+
 
                 const stateRows = state.split("|")
                 const boardSize = stateRows.length
@@ -244,7 +246,28 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
       
                     return cellData
                   })
-              )  
+              )
+
+              cloneState = Array(boardSize).fill(null).map((_, row) =>
+                Array(boardSize).fill(null).map((_, col) => {
+                  var cellData = {
+                    character : stateRows[row][col] || ".", 
+                    characterColor :  (stateRows[row][col] != "." && stateRows[row][col] != "0") && (stateRows[row][col].toLowerCase() == stateRows[row][col] ? "BLACK" : "WHITE"),
+                    inDefaultPosition : function(){
+                      return stateRows[row][col] != null ? true : null
+                    }(),
+                    image : "",
+                    color : (row + col) % 2 == 0 ? '#B7C0D8' : '#E8EDF9'
+                  }
+                  return cellData
+                })
+            )
+            
+              
+              if (playerGameStatus.color == "WHITE"){
+                cloneState = transformBoard(cloneState)
+              }
+            
 
               if (playerGameStatus.color == "BLACK"){
                 newState = transformBoard(newState) 
@@ -258,89 +281,106 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 return
               }
 
-              const king = findKing(newState, playerGameStatus.color)
-
+              const myKing = findKing(newState, playerGameStatus.color)
+              const king = findKing(cloneState, playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK")
               // check & checkmate auto check
-
+              console.log(king)
+              console.log(myKing)
 
               // automate checkmate and incheck
-              if (king.row && king.col){
+              if (king.row != undefined && king.col != undefined){
                 var row = king.row 
                 var col = king.col
-
-                newState = handleMovement(newState[row][col]?.character, {
+                cloneState = handleMovement(cloneState[row][col]?.character, {
                   row, col, 
-                  character : newState[row][col]?.character, 
-                  characterColor : newState[row][col]?.characterColor,
-                  validMove : newState[row][col]?.validMove,
-                }, newState, playerGameStatus.color)
-                console.log(king.row, king.col, "EEHEH")
+                  character : cloneState[row][col]?.character, 
+                  characterColor : cloneState[row][col]?.characterColor,
+                  validMove : cloneState[row][col]?.validMove,
+                }, cloneState, playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK")
+
+                console.log(cloneState)
 
                 // if (playerGameStatus.color == "WHITE"){
                   setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
-                    ...playerGameStatus.kingPosition, row : king.row, col : king.col
+                    ...playerGameStatus.kingPosition, 
+                    row : king.row, col : king.col
                   }})
                 // } else {
                   // setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
-                    // ...playerGameStatus.kingPosition, row : newState.length - king.row - 1, col : newState.length - king.col - 1
+                    // ...playerGameStatus.kingPosition, row : cloneState.length - king.row - 1, col : cloneState.length - king.col - 1
                   // }})
                 // }
 
-                var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState,playerGameStatus)
-                var moveCheck
+                var enemyPlayerGameStatus = {
+                  color : playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK", 
+                  kingPosition : {
+                    inDefaultPosition : true, 
+                    row, col
+                  }
+                }
+                var invalidKingMoves = invalidKingUnderAttackMoves(enemyPlayerGameStatus.kingPosition ,cloneState, enemyPlayerGameStatus)
+                for (let cell of invalidKingMoves.map.keys()){
+                  console.log(cell)
+                }
+                var moveCheck = {
+                  stillHaveValidMove : false
+                }
                 if (invalidKingMoves.map.size > 0){ // means that king is in check
-                  // if (!kingCheck(newState[row][col].character).valid){
-                    var kingHaveMoves = checkIfKingStillHasValidMoves(newState)
+                  // if (!kingCheck(cloneState[row][col].character).valid){
+                    var kingHaveMoves = checkIfKingStillHasValidMoves(cloneState)
                     if (!kingHaveMoves){
-                      moveCheck = checkEliminateKingAttackerMoves(newState, invalidKingMoves.source, playerGameStatus.kingPosition, playerGameStatus.color)
-                      newState = moveCheck.newState
+                      moveCheck = checkEliminateKingAttackerMoves(cloneState, invalidKingMoves.source, {...playerGameStatus.kingPosition, row : king.row, col : king.col}, playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK")
+                      cloneState = moveCheck.cloneState
                     }
                     console.log(" KING IS IN CHECK")
 
                   // }
-                  setIsInCheckHandler(true)
+                  // setIsInCheckHandler(true)
                 } else { // king is not in check
 
-                  var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
-                  if (((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK")) && !stillHaveValidMoves && !isOtherPieceMovable(newState, playerGameStatus.color)){
+                  var stillHaveValidMoves = checkIfKingStillHasValidMoves(cloneState)
+                  if (((response.data?.turn == true && playerGameStatus.color == "BLACK") || (response.data?.turn == false && playerGameStatus.color == "WHITE")) && !stillHaveValidMoves && !isOtherPieceMovable(cloneState, playerGameStatus.color)){
                     // triggerEndGameWrapper(gameId, token, enemyData.id, "STALEMATE")
                     console.log("STALEMATE")
                   }
-                  // moveCheck = checkEliminateKingAttackerMoves(newState, null, playerGameStatus.kingPosition)
+                  // moveCheck = checkEliminateKingAttackerMoves(cloneState, null, playerGameStatus.kingPosition)
                   // if (!moveCheck.stillHaveValidMove){
                   //   console.log("STALEMATE")
                   // }
-                  // newState = moveCheck.newState
+                  // cloneState = moveCheck.cloneState
                   // TODO : trigger endgame post request not only from ws receiver 
                   // TODO : FE end game 
                   // TODO : encrypt payload
-                  setIsInCheckHandler(false)
+                  // setIsInCheckHandler(false)
                 }
 
                 for (const cell of invalidKingMoves.map.keys()) {
-                  newState[cell.row][cell.col].validMove = false
+                  cloneState[cell.row][cell.col].validMove = false
                 } 
 
                 if (invalidKingMoves.map.size > 0){
-                  var stillHaveValidMoves = checkIfKingStillHasValidMoves(newState)
+                  var stillHaveValidMoves = checkIfKingStillHasValidMoves(cloneState)
                   if (!stillHaveValidMoves && !moveCheck.stillHaveValidMove){
                     console.log("CHECKMATED")
-                    triggerEndGameWrapper(gameId, token, enemyData.id, "CHECKMATE")
+                    // triggerEndGameWrapper(gameId, token, userData.id, "CHECKMATE")
   
   
                     for (let row = 0; row < boardSize; row++){
                       for (let col = 0; col < boardSize; col++){
-                         newState[row][col].validMove = false
+                         cloneState[row][col].validMove = false
                       }
                     }
   
                     return
                   }
-                }
-
-
- 
+                } 
               } 
+
+              setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
+                ...playerGameStatus.kingPosition, row : myKing.row, col : myKing.col
+              }})
+
+
 
               for (let row = 0; row < boardSize; row++){
                 for (let col = 0; col < boardSize; col++){
@@ -354,7 +394,6 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
 
               setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
-              console.log("WKWKz")
               setActiveSkillSet(null)
               setOnHoldSkill(false)
               

@@ -50,7 +50,8 @@ const handleMovement = (piece, position, state, playerColor) => {
     }
 
     const handler = movement.get(pieceChar) 
-    return handler({...position, pieceChar}, state, playerColor)
+    const result = handler({...position, pieceChar}, state, playerColor)
+    return result
 }
 
 

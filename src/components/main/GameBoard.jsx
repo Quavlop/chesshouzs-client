@@ -138,9 +138,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
             var invalidKingMoves = invalidKingUnderAttackMoves(playerGameStatus.kingPosition ,newState, playerGameStatus)
             // console.log(invalidKingMoves.map.length)
-            for (let cell of invalidKingMoves.map.keys()){
-              console.log(cell)
-            }
+
             if (invalidKingMoves.map.size > 0){ // means that king is in check
               // if (!king.valid){
                 console.log(invalidKingMoves.source)

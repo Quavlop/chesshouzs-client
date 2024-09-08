@@ -51,12 +51,26 @@ const kingMovement = (position, state, playerColor) => {
     for (let row = 0; row < boardSize; row++) {
         for (let col = 0; col < boardSize; col++) {
             newState[row][col].validMove = false
-            if (!isWall(newState[row][col].character) && kingMovementValidator(position, {row, col}, newState[row][col]) && (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor) && !kingUnsafePositionHandler(position.characterColor, {row, col}, state)){
+            // if (kingMovementValidator(position, {row, col}, newState[row][col])){
+            //     if (position.row == row && position.col == col){
+            //         console.log("KINGNYA")
+            //     }
+            //     console.log("DEBUG", row, col, "DEBUG")
+            //     console.log(kingMovementValidator(position, {row, col}, newState[row][col]))
+            //     console.log(isWall(newState[row][col].character))
+            //     console.log((newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor))
+            //     console.log(kingUnsafePositionHandler(position.characterColor, {row, col}, state))
+            // }
+            if (
+                !isWall(newState[row][col].character) && 
+                kingMovementValidator(position, {row, col}, newState[row][col]) &&
+                (!newState[row][col].characterColor || position.characterColor != newState[row][col].characterColor) && 
+                !kingUnsafePositionHandler(position.characterColor, {row, col}, state)
+            ){
                 newState[row][col].validMove = true
             }
         }
     }
-
     return newState
 }
 const knightMovement = (position, state, playerColor) => {
@@ -1390,7 +1404,6 @@ const checkKnightAttacker = (boardSize, kingPosition, newState, player) => {
     var invalidKingMoves = new Map()
     var source = []
 
-    console.log(kingPosition)
     for (let fn of knightAttackList){
         const square = fn(kingPosition.row, kingPosition.col) 
         const { row, col } = square 
