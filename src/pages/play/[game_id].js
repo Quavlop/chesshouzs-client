@@ -23,6 +23,7 @@ import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
+import InfoModal from '@/components/sub/InfoModal'
 import { checkEliminateKingAttackerMoves, checkIfDraw, checkIfKingStillHasValidMoves, isOtherPieceMovable, isOtherPieceMovableForCheckmate } from '@/helpers/utils/movement'
 
 
@@ -64,6 +65,11 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
   const [gameData, setGameData] = useState(gameDetail)
   const [wsConn, setWsConn] = useState(null)
   const [activeSkillSet, setActiveSkillSet] = useState(null)
+  const [isInfoModalActive, setIsInfoModalActive] = useState(false)
+  const [infoModalData, setInfoModalData] = useState({
+    title : "", 
+    message : "",
+  })
 
   // object of row and col
   const [clickCoordinate, setClickCoordinate] = useState({
@@ -278,6 +284,15 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
               if (checkIfDraw(newState)){
                 console.log("DRAW")
+                const success = triggerEndGameWrapper(gameId, token, userData.id, "DRAW")
+                if (success){
+                  setOverlay(true)
+                  setIsInfoModalActive(true)
+                  setInfoModalData({
+                    title : "GAME HAS ENDED!", 
+                    message : "DRAW"
+                  })
+                }
                 return
               }
 
@@ -298,8 +313,6 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   validMove : cloneState[row][col]?.validMove,
                 }, cloneState, playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK")
 
-                console.log(cloneState)
-
                 // if (playerGameStatus.color == "WHITE"){
                   setPlayerGameStatusHandler({...playerGameStatus, kingPosition : {
                     ...playerGameStatus.kingPosition, 
@@ -319,9 +332,6 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   }
                 }
                 var invalidKingMoves = invalidKingUnderAttackMoves(enemyPlayerGameStatus.kingPosition ,cloneState, enemyPlayerGameStatus)
-                for (let cell of invalidKingMoves.map.keys()){
-                  console.log(cell)
-                }
                 var moveCheck = {
                   stillHaveValidMove : false
                 }
@@ -340,17 +350,26 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
                   var stillHaveValidMoves = checkIfKingStillHasValidMoves(cloneState)
                   if (((response.data?.turn == true && playerGameStatus.color == "BLACK") || (response.data?.turn == false && playerGameStatus.color == "WHITE")) && !stillHaveValidMoves && !isOtherPieceMovable(cloneState, playerGameStatus.color)){
-                    // triggerEndGameWrapper(gameId, token, enemyData.id, "STALEMATE")
                     console.log("STALEMATE")
+                    const success = triggerEndGameWrapper(gameId, token, userData.id, "STALEMATE")
+                    if (success){
+                      setOverlay(true)
+                      setIsInfoModalActive(true)
+                      setInfoModalData({
+                        title : "GAME HAS ENDED!", 
+                        message : "STALEMATE"
+                      })
+                    }
+                    return 
                   }
                   // moveCheck = checkEliminateKingAttackerMoves(cloneState, null, playerGameStatus.kingPosition)
                   // if (!moveCheck.stillHaveValidMove){
                   //   console.log("STALEMATE")
                   // }
                   // cloneState = moveCheck.cloneState
-                  // TODO : trigger endgame post request not only from ws receiver 
                   // TODO : FE end game 
                   // TODO : encrypt payload
+                  // TODO : implement promotion
                   // setIsInCheckHandler(false)
                 }
 
@@ -363,7 +382,15 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   const otherPieceMovable = isOtherPieceMovableForCheckmate(cloneState, enemyPlayerGameStatus.color, invalidKingMoves.source, enemyPlayerGameStatus.kingPosition)
                   if (!stillHaveValidMoves && !moveCheck.stillHaveValidMove && !otherPieceMovable){
                     console.log("CHECKMATED")
-                    // triggerEndGameWrapper(gameId, token, userData.id, "CHECKMATE")y
+                    const success = triggerEndGameWrapper(gameId, token, userData.id, "CHECKMATE")
+                    if (success){
+                      setOverlay(true)
+                      setIsInfoModalActive(true)
+                      setInfoModalData({
+                        title : "GAME HAS ENDED!", 
+                        message : "CHECKMATE"
+                      })
+                    }
   
   
                     for (let row = 0; row < boardSize; row++){
@@ -456,9 +483,16 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
       const data = await triggerEndGame(GAME_API_REST_URL ,gameId, token, winnerId, type)
       if (data.code != 200){
         console.log("Fails") 
-        return
+        return {
+          success : false, 
+          message : data.message
+        }
       }
       console.log(data)
+      return {
+        success : true
+      }
+
   }
 
   const executeSkillWrapper = async (position) => {
@@ -532,6 +566,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
     setOnHoldSkill(false)
   }
 
+  // TODO : move show modal end game to end_game event emit from BE
+
   return (
     serverFailure 
       ? <ServerError/>
@@ -540,6 +576,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
           {!verifiedEmail && <ReVerifyEmailPopup resendEmailVerificationLink={resendEmailVerificationLink} emailVerificationResendMessage={emailVerificationMessage} resendLoading={resendLoading} responseType={resendVerificationLinkResponse}/>}
           {overlay && <Overlay/>}
+          {isInfoModalActive && <InfoModal title={infoModalData.title} message={infoModalData.message}/>}
 
             <Flex w="100vw" h="100vh" bg={onHoldSkill ? "#454545" : "#F4F4F4"}>
             <Flex width="90%" height="90%" justifyContent={{base : "flex-start", lg : "center"}} flexDirection={{ base: "column", lg : "row" }} alignItems={{base : "center", lg : "flex-start"}} margin={{base : "auto", lg : "none"}} marginTop={{base : "10rem", lg : "auto"}}>
