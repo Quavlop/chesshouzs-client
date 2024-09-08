@@ -23,7 +23,7 @@ import { execute } from '@/helpers/skills/execution'
 import constants from "@/config/constants/game"
 import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
-import { checkEliminateKingAttackerMoves, checkIfDraw, checkIfKingStillHasValidMoves, isOtherPieceMovable } from '@/helpers/utils/movement'
+import { checkEliminateKingAttackerMoves, checkIfDraw, checkIfKingStillHasValidMoves, isOtherPieceMovable, isOtherPieceMovableForCheckmate } from '@/helpers/utils/movement'
 
 
 export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
@@ -360,9 +360,10 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
 
                 if (invalidKingMoves.map.size > 0){
                   var stillHaveValidMoves = checkIfKingStillHasValidMoves(cloneState)
-                  if (!stillHaveValidMoves && !moveCheck.stillHaveValidMove){
+                  const otherPieceMovable = isOtherPieceMovableForCheckmate(cloneState, enemyPlayerGameStatus.color, invalidKingMoves.source, enemyPlayerGameStatus.kingPosition)
+                  if (!stillHaveValidMoves && !moveCheck.stillHaveValidMove && !otherPieceMovable){
                     console.log("CHECKMATED")
-                    // triggerEndGameWrapper(gameId, token, userData.id, "CHECKMATE")
+                    // triggerEndGameWrapper(gameId, token, userData.id, "CHECKMATE")y
   
   
                     for (let row = 0; row < boardSize; row++){

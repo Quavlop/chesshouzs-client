@@ -1617,6 +1617,33 @@ const isOtherPieceMovable = (state, playerColor) => {
     return false
 }
 
+const isOtherPieceMovableForCheckmate = (state, playerColor, source, kingPosition) => {
+    for (let row = 0; row < state.length; row++){
+        for (let col = 0; col < state.length; col++){
+            if (!['0', '.', 'k', 'K'].includes(state[row][col].character) && state[row][col].characterColor == playerColor){
+                var newState = handleMovement(state[row][col]?.character, {
+                    row, col, 
+                    character : state[row][col]?.character, 
+                    characterColor : state[row][col]?.characterColor,
+                    validMove : state[row][col]?.validMove,
+                  }, state, playerColor)
+                  var moveCheck = checkEliminateKingAttackerMoves(newState, source, kingPosition, playerColor)
+                  newState = moveCheck.newState
+                  for (let i = 0; i < state.length; i++){
+                    for (let j = 0; j < state.length; j++){
+                        if (newState[i][j].validMove){
+                            return true
+                        }
+                    }
+                  }
+            }
+        }
+    }
+
+    return false
+}
+
+
 const checkIfDraw = (state) => {
     for (let row = 0; row < state.length; row++){
         for (let col = 0; col < state.length; col++){
@@ -1646,6 +1673,7 @@ export {
     rookMovement, 
     evolvedPawnMovement, 
     checkEliminateKingAttackerMoves,
-    isOtherPieceMovable, 
+    isOtherPieceMovable,
+    isOtherPieceMovableForCheckmate, 
     checkIfDraw,
 }
