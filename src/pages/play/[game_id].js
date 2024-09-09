@@ -25,9 +25,23 @@ import WebSocketClient from '@/config/WebSocket';
 import WebSocketConstants from '@/config/constants/websocket'
 import InfoModal from '@/components/sub/InfoModal'
 import { checkEliminateKingAttackerMoves, checkIfDraw, checkIfKingStillHasValidMoves, isOtherPieceMovable, isOtherPieceMovableForCheckmate } from '@/helpers/utils/movement'
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Button,
+} from '@chakra-ui/react'
+
 
 
 export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
+
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
@@ -367,7 +381,6 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   //   console.log("STALEMATE")
                   // }
                   // cloneState = moveCheck.cloneState
-                  // TODO : FE end game 
                   // TODO : encrypt payload
                   // TODO : implement promotion
                   // setIsInCheckHandler(false)
@@ -417,11 +430,6 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                    newState[row][col].validMove = false
                 }
               }
-
-              // TODO : samain logic nya di gameboard smaa disini buat cek checkmate
-
-
-
 
               setMyTurn((response.data?.turn == true && playerGameStatus.color == "WHITE") || (response.data?.turn == false && playerGameStatus.color == "BLACK"))
               setActiveSkillSet(null)
@@ -578,6 +586,10 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
     console.log(data)
   }
 
+  const resignVerificationHandler = () => {
+
+  }
+
   const triggerSkillsWrapperHandler = async (skill) => {
 
     const args = {
@@ -613,8 +625,6 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
     setOnHoldSkill(false)
   }
 
-  // TODO : move show modal end game to end_game event emit from BE
-
   return (
     serverFailure 
       ? <ServerError/>
@@ -624,6 +634,29 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
           {!verifiedEmail && <ReVerifyEmailPopup resendEmailVerificationLink={resendEmailVerificationLink} emailVerificationResendMessage={emailVerificationMessage} resendLoading={resendLoading} responseType={resendVerificationLinkResponse}/>}
           {overlay && <Overlay/>}
           {isInfoModalActive && <InfoModal title={infoModalData.title} message={infoModalData.message}/>}
+
+          {
+                  <Modal isOpen={isOpen} onClose={onClose}>
+                  <ModalOverlay />
+                  <ModalContent>
+                    <ModalHeader>Are you sure you want to resign?</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                    </ModalBody>
+          
+                    <ModalFooter>
+                      <Button colorScheme='blue' mr={3} onClick={() => {
+                        triggerEndGameWrapper(gameId, token, enemyData.id, "RESIGN")
+                        onClose()
+                      }}>
+                        Yes
+                      </Button>
+                      <Button variant='ghost' onClick={onClose}>No</Button>
+                    </ModalFooter>
+                  </ModalContent>
+                </Modal>
+          }
+
 
             <Flex w="100vw" h="100vh" bg={onHoldSkill ? "#454545" : "#F4F4F4"}>
             <Flex width="90%" height="90%" justifyContent={{base : "flex-start", lg : "center"}} flexDirection={{ base: "column", lg : "row" }} alignItems={{base : "center", lg : "flex-start"}} margin={{base : "auto", lg : "none"}} marginTop={{base : "10rem", lg : "auto"}}>
@@ -660,6 +693,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 activeSkillSet={activeSkillSet}
                 buffDebuffStatus={buffDebuffStatus}
                 myTurn={myTurn}
+                resignVerificationHandler={onOpen}
                 />
             </Flex>
           </Flex>

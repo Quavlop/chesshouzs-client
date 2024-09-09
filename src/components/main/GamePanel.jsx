@@ -2,7 +2,7 @@ import {Box, Flex, SimpleGrid, Button, Text} from '@chakra-ui/react';
 import SkillCard from '../sub/SkillCard';
 import constants from '@/config/constants/game';
 
-export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setOnHoldSkillHandler, resetSkillStateHandler, activeSkillSet, myTurn, buffDebuffStatus}){
+export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setOnHoldSkillHandler, resetSkillStateHandler, activeSkillSet, myTurn, buffDebuffStatus, resignVerificationHandler}){
     return <Flex flexDirection={"column"} justifyContent={"space-between"} mt={{base : "5rem", lg : 0}} width={{base : "100%", lg : "25%"}} alignItems={"center"} h={{base : "auto", lg : "100%"}}>
         <Box 
             bg={"#7B61FF"} 
@@ -57,7 +57,7 @@ export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setO
             minW="450px"
             border={"2px solid #B7C0D8"}
         >
-            
+            <Button onClick={resignVerificationHandler}>Resign</Button>
         </Box>
     </Flex>
 }
