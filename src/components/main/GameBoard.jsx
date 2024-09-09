@@ -1,5 +1,5 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image, AspectRatio } from '@chakra-ui/react';
-import {boardCellColorHandler, handleMovement, invalidKingUnderAttackMoves, kingCheck, transformBoard} from "@/helpers/utils/game"
+import {boardCellColorHandler, evolvedPawnCheck, handleMovement, invalidKingUnderAttackMoves, kingCheck, transformBoard} from "@/helpers/utils/game"
 import { checkEliminateKingAttackerMoves, checkIfKingStillHasValidMoves } from '@/helpers/utils/movement';
 import { generateNewNotationState } from '@/helpers/utils/game';
 import { Chessboard } from 'react-chessboard';
@@ -54,6 +54,9 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             }(),
             isWall : function(){
               return state[row][col].character == "0"
+            }(), 
+            isEvolvedPawn : function(){
+              return evolvedPawnCheck(state[row][col].character).valid
             }()
           }, 
           state[row][col]?.color)
@@ -208,19 +211,14 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
                 src='/logo/logo.png'
                 objectFit={"cover"}
             /> */}
-            <Text textAlign={"center"} position={"absolute"} color="black">
-                {
-                    /*TODO : change to image*/
-                }
-                {
-                              //  const map = buffDebuffStatus.debuffState[constants.SKILL_FOG_MASTER]
-                              //  if (playerGameStatus.color == "BLACK"){
-                              //  return map[`${state.length - row - 1}-${state.length - col - 1}`]
-                              //  }
-                              //  return map[`${row}-${col}`]
-                }
-                {((state[row][col]?.character != "."  && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) || (state[row][col]?.validMove && state[row][col].character != ".")) && state[row][col]?.character}
-            </Text>
+            {/* <Text textAlign={"center"} position={"absolute"} color="black"> */}
+                {/* {((state[row][col]?.character != "."  && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) || (state[row][col]?.validMove && state[row][col].character != ".")) && state[row][col]?.character} */}
+            {/* </Text> */}
+            {
+              ( (state[row][col]?.character != "." && state[row][col]?.character != '0' && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) || (state[row][col]?.validMove && state[row][col].character != ".")) &&  
+                <Image src={`/icons/game-character/${state[row][col].character}.png`} alt={state[row][col].character} width={"90%"} height={"90%"} position={"absolute"}/>
+            }
+
         </Box>
       );
     }

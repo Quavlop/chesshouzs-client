@@ -140,6 +140,10 @@ const boardCellColorHandler = (clickCoordinate, target, defaultColor) => {
    if (target.isWall){
         return "black"
    }
+
+   if (target.isEvolvedPawn){
+        return "red"
+   }
 //    if (target.onHoldSkill){
 //         return "lime"
 //    }
