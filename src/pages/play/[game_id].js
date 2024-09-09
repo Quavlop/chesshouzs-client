@@ -267,7 +267,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   }
                   return cellData
                 })
-            )
+             )
             
               
               if (playerGameStatus.color == "WHITE"){
@@ -285,14 +285,14 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
               if (checkIfDraw(newState)){
                 console.log("DRAW")
                 const success = triggerEndGameWrapper(gameId, token, userData.id, "DRAW")
-                if (success){
-                  setOverlay(true)
-                  setIsInfoModalActive(true)
-                  setInfoModalData({
-                    title : "GAME HAS ENDED!", 
-                    message : "DRAW"
-                  })
-                }
+                // if (success){
+                //   setOverlay(true)
+                //   setIsInfoModalActive(true)
+                //   setInfoModalData({
+                //     title : "GAME HAS ENDED!", 
+                //     message : "DRAW"
+                //   })
+                // }
                 return
               }
 
@@ -352,14 +352,14 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   if (((response.data?.turn == true && playerGameStatus.color == "BLACK") || (response.data?.turn == false && playerGameStatus.color == "WHITE")) && !stillHaveValidMoves && !isOtherPieceMovable(cloneState, playerGameStatus.color)){
                     console.log("STALEMATE")
                     const success = triggerEndGameWrapper(gameId, token, userData.id, "STALEMATE")
-                    if (success){
-                      setOverlay(true)
-                      setIsInfoModalActive(true)
-                      setInfoModalData({
-                        title : "GAME HAS ENDED!", 
-                        message : "STALEMATE"
-                      })
-                    }
+                    // if (success){
+                    //   setOverlay(true)
+                    //   setIsInfoModalActive(true)
+                    //   setInfoModalData({
+                    //     title : "GAME HAS ENDED!", 
+                    //     message : "STALEMATE"
+                    //   })
+                    // }
                     return 
                   }
                   // moveCheck = checkEliminateKingAttackerMoves(cloneState, null, playerGameStatus.kingPosition)
@@ -383,14 +383,14 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   if (!stillHaveValidMoves && !moveCheck.stillHaveValidMove && !otherPieceMovable){
                     console.log("CHECKMATED")
                     const success = triggerEndGameWrapper(gameId, token, userData.id, "CHECKMATE")
-                    if (success){
-                      setOverlay(true)
-                      setIsInfoModalActive(true)
-                      setInfoModalData({
-                        title : "GAME HAS ENDED!", 
-                        message : "CHECKMATE"
-                      })
-                    }
+                    // if (success){
+                      // setOverlay(true)
+                      // setIsInfoModalActive(true)
+                      // setInfoModalData({
+                      //   title : "GAME HAS ENDED!", 
+                      //   message : "CHECKMATE"
+                      // })
+                    // }
   
   
                     for (let row = 0; row < boardSize; row++){
@@ -400,6 +400,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                     }
   
                     return
+                  } else {
+                    console.log("WK")
                   }
                 } 
               } 
@@ -458,8 +460,53 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
               const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, gameState.length)
               setOpponentBuffDebuffStatus(enemySkillStatusMap)
             } else if (response.event == WebSocketConstants.WS_EVENT_END_GAME) {
-                console.log("end_game")
                 setOverlay(true)
+                setIsInfoModalActive(true)
+
+                const { data } = response
+                var title, message
+
+                if (data?.winnerId == userData.id){
+
+                  if (data?.type == "CHECKMATE"){
+                     title = "YOU WON!"
+                     message = "You just checkmated your enemy. What the sigma?"
+                  } else if (data?.type == "RESIGN"){
+                     title = "YOU WON!"
+                     message = "Your enemy just gave up."
+                  } else if (data?.type == "STALEMATE"){  
+                     title = "DRAW!"
+                     message = "Stalemate. LOL"
+                  } else if (data?.type == "DRAW"){
+                     title = "DRAW!"
+                     message = "Good game for both of you."
+                  } else if (data?.type == "TIMEOUT"){
+                     title = "YOU WON!"
+                     message = "Your enemy spent too much time sleeping xD"
+                  }
+                } else if (data?.loserId == userData.id){
+
+                  if (data?.type == "CHECKMATE"){
+                     title = "YOU LOST!"
+                     message = "Blud got checkmated. -10000 aura"
+                  } else if (data?.type == "RESIGN"){
+                     title = "YOU LOST!"
+                     message = "Bruh are you a coward?"
+                  } else if (data?.type == "STALEMATE"){
+                     title = "DRAW!"
+                     message = "Stalemate. LOL"
+                  } else if (data?.type == "DRAW"){
+                     title = "DRAW!"
+                     message = "Good game for both of you."
+                  } else if (data?.type == "TIMEOUT"){
+                     title = "YOU LOST!"
+                     message = "Did you fall asleep?"
+                  }
+                } else {
+                  return
+                }
+                setInfoModalData({title, message})
+
             }
         },
         onError : () => {},
