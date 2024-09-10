@@ -449,7 +449,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   console.log("FAILS")
                   return
               }
-              const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, gameState.length)
+              console.log("XIXIIXIXi")
+              const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, gameState.length, playerGameStatus.color)
               setBuffDebuffStatus(playerSkillStatusMap)
 
               // enemy earliest player state
@@ -465,7 +466,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                 console.log("FAILS")
                 return
               }
-              const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, gameState.length)
+              const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, gameState.length, playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK")
               setOpponentBuffDebuffStatus(enemySkillStatusMap)
             } else if (response.event == WebSocketConstants.WS_EVENT_END_GAME) {
                 setOverlay(true)
@@ -803,7 +804,7 @@ export async function getServerSideProps(context){
             },
           } 
         }
-        const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, boardSizeStub)
+        const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, boardSizeStub, playerColorStub)
 
         // enemy 
         const getEnemySkillStatus = await fetch(GAME_API_REST_URL + '/v1/match/player/status?isOpponent=1', {
@@ -822,7 +823,7 @@ export async function getServerSideProps(context){
             },
           } 
         }
-        const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, boardSizeStub)
+        const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, boardSizeStub, playerColorStub == "BLACK" ? "WHITE" : "BLACK")
 
 
         state = Array(boardSizeStub).fill(null).map((_, row) =>

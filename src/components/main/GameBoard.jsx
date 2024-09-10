@@ -47,9 +47,9 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             }(),
             coveredByFog : function(){
               const map = buffDebuffStatus.debuffState[constants.SKILL_FOG_MASTER]
-              if (playerGameStatus.color == "BLACK"){
-                return map[`${state.length - row - 1}-${state.length - col - 1}`] && state[state.length - row - 1][state.length - col - 1].characterColor != playerGameStatus.color
-              }
+              // if (playerGameStatus.color == "BLACK"){
+              //   return map[`${state.length - row - 1}-${state.length - col - 1}`] && state[state.length - row - 1][state.length - col - 1].characterColor != playerGameStatus.color
+              // }
               return map[`${row}-${col}`] && state[row][col].characterColor != playerGameStatus.color
             }(),
             isWall : function(){
