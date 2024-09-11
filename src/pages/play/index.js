@@ -291,6 +291,29 @@ export async function getServerSideProps(context){
       //     }          
       // }      
 
+      const getCurrentActiveMatchData = await fetch(GAME_API_REST_URL + '/v1/match/player/check', {
+        method : "GET",
+        headers : {
+            Authorization : `Bearer ${req.cookies?.__SESS_TOKEN}`
+        }
+      }) 
+
+      const matchDataResp = await getCurrentActiveMatchData.json()
+      if (matchDataResp.code != 200){
+        return { props : {serverFailure : true} }
+      } 
+
+      if (matchDataResp.data){
+        return {
+          redirect: {
+            permanent: false,
+            destination: `/play/${matchDataResp.data}`
+          }
+        }  
+      }
+      
+
+
       const getGameVariants = await fetch(GAME_API_REST_URL + '/v1/game', {
         method : "GET",
         credentials : 'include',

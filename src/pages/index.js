@@ -23,7 +23,7 @@ export default function Home({userData, serverFailure = false}) {
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
-  const { API_URL } = publicRuntimeConfig;  
+  const { API_URL, GAME_API_REST_URL } = publicRuntimeConfig;  
 
   const {user, setUser} = useContext(UserContext);  
 
@@ -202,12 +202,36 @@ export async function getServerSideProps(context){
 
   const config = getConfig();
   const { publicRuntimeConfig } = config;
-  const { API_URL, ENVIRONMENT } = publicRuntimeConfig;     
+  const { API_URL, ENVIRONMENT, GAME_API_REST_URL } = publicRuntimeConfig;     
 
 
   try {
       const response = await isAuthenticated(API_URL, req.cookies?.__SESS_TOKEN);
       if (response.code == 200){
+
+
+        const getCurrentActiveMatchData = await fetch(GAME_API_REST_URL + '/v1/match/player/check', {
+          method : "GET",
+          headers : {
+              Authorization : `Bearer ${req.cookies?.__SESS_TOKEN}`
+          }
+        }) 
+  
+        const matchDataResp = await getCurrentActiveMatchData.json()
+        if (matchDataResp.code != 200){
+          return { props : {serverFailure : true} }
+        } 
+
+        if (matchDataResp.data){
+          return {
+            redirect: {
+              permanent: false,
+              destination: `/play/${matchDataResp.data}`
+            }
+          }  
+        }
+
+      
         return {
           props : {
             serverFailure : false, 
