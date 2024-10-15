@@ -9,7 +9,7 @@ export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setO
             width={"100%"} 
             height={{base : "300px", lg : "100%"}} 
             maxW="800px" 
-            minW="450px"
+            minW="250px"
             border={"2px solid #B7C0D8"}
         >
             {
@@ -54,7 +54,7 @@ export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setO
             height={{base : "300px", lg : "100%"}} 
             width={"100%"}
             maxW="800px"
-            minW="450px"
+            minW="250px"
             border={"2px solid #B7C0D8"}
         >
             <Button onClick={resignVerificationHandler}>Resign</Button>
