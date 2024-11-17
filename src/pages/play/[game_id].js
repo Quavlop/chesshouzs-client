@@ -39,7 +39,7 @@ import {
 
 
 
-export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
+export default function PlayOnline({duration, gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -75,6 +75,11 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
   const [playerGameStatus, setPlayerGameStatus] = useState({
     color, kingPosition : kingData
   }) 
+
+  const [durationList, setDurationList] = useState({
+      self : duration.minutes - userData.duration, 
+      enemy : duration.minutes - enemyData.duration
+  })
 
   const [gameData, setGameData] = useState(gameDetail)
   const [wsConn, setWsConn] = useState(null)
@@ -468,6 +473,13 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
               }
               const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, gameState.length, playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK")
               setOpponentBuffDebuffStatus(enemySkillStatusMap)
+
+              const enemyColor = playerGameStatus.color == "WHITE" ? "BLACK" : "WHITE"
+              setDurationList({
+                self : playerGameStatus.color == "WHITE" ? duration.minutes - response.data.white_spent_duration : duration.minutes - response.data.black_spent_duration,
+                enemy : enemyColor == "WHITE" ? duration.minutes - response.data.white_spent_duration : duration.minutes - response.data.black_spent_duration,
+              })
+
             } else if (response.event == WebSocketConstants.WS_EVENT_END_GAME) {
                 setOverlay(true)
                 setIsInfoModalActive(true)
@@ -679,6 +691,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   wsConn={wsConn}
                   userData={userData}
                   enemyData={enemyData} 
+                  duration={duration}
+                  durationList={durationList}
                   executeSkill={executeSkillWrapper}
                   buffDebuffStatus={buffDebuffStatus}
                   enemyBuffDebuffStatus={opponentBuffDebuffStatus}
@@ -745,7 +759,6 @@ export async function getServerSideProps(context){
             },
           } 
         }
-
         if (matchDataResp.data.id != game_id) {
           return {
             redirect: {
@@ -775,6 +788,8 @@ export async function getServerSideProps(context){
         playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
         const enemyData = playerColorStub == "WHITE" ? matchDataResp.data?.blackPlayer : matchDataResp.data?.whitePlayer;
         const myTurn = matchDataResp.data?.turn == playerColorStub;
+        response.user.duration = playerColorStub == "WHITE" ? matchDataResp.data?.whitePlayer?.duration : matchDataResp.data?.blackPlayer?.duration;
+
 
 
 
@@ -874,6 +889,9 @@ export async function getServerSideProps(context){
             state : state, 
             color : playerColorStub, 
             kingData,
+            duration : {
+              minutes : matchDataResp?.data?.gameTypeVariant?.duration,
+            },
             gameDetail, 
             skillStats,
             playerBuffDebuffStatus : playerSkillStatusMap,

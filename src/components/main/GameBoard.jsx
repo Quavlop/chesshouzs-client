@@ -229,7 +229,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
 export default  function Board(props){
 
-  const { gameData, userData, enemyData } = props
+  const { gameData, userData, enemyData, duration, durationList } = props
 
   // return
   return   <Box
@@ -243,7 +243,7 @@ export default  function Board(props){
             justifyContent={"center"}
             alignItems={"center"}
           >   
-            <PlayerProfileGameCard userData={enemyData}/>
+            <PlayerProfileGameCard userData={enemyData} duration={duration} durationList={durationList} self={false}/>
 
             
             <Box
@@ -274,7 +274,7 @@ export default  function Board(props){
               </AspectRatio>
             </Box>
             
-            <PlayerProfileGameCard userData={userData}/>
+            <PlayerProfileGameCard userData={userData} duration={duration} durationList={durationList} self={true}/>
 
         </Box>
 
