@@ -224,6 +224,8 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
       }    
       setUser(userData);
 
+
+
       const ws = WebSocketClient(GAME_API_WS_URL, token, {
         onOpen : () => { 
           ws.send(JSON.stringify(
@@ -538,6 +540,7 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
     }
     return () => {
       window.removeEventListener('popstate', preventNavigation);
+      // clearInterval(timer)
       if (wsConn){
         wsConn.close()
       }
@@ -545,7 +548,30 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
   }, []);
 
   useEffect(() => {
-  }, [gameState]) 
+    const timer = setInterval(() => {
+      if (myTurn){
+        setDurationList(
+          (durationList) => (
+            {
+              ...durationList, 
+              self : durationList.self - 1 
+            }
+          )
+        )
+      } else {
+        setDurationList(
+          (durationList) => (
+            {
+              ...durationList, 
+              enemy : durationList.enemy - 1 
+            }
+          )
+        )
+      }
+  }, 1000)
+  
+  return () => clearInterval(timer)
+  }, [myTurn]) 
 
   const triggerEndGameWrapper = async (gameId, token, winnerId = "", type) => {
       const data = await triggerEndGame(GAME_API_REST_URL ,gameId, token, winnerId, type)

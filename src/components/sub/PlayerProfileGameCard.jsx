@@ -1,4 +1,6 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image, AspectRatio } from '@chakra-ui/react';
+import { formatMinutes } from '@/helpers/utils/game';
+
 
 const PlayerProfileGameCard = ({ userData, duration, durationList, self }) => {
     return (
@@ -25,7 +27,7 @@ const PlayerProfileGameCard = ({ userData, duration, durationList, self }) => {
           color="white" 
           fontFamily="mono"
         >
-          {self ? durationList.self : durationList.enemy}
+          {self ? formatMinutes(durationList.self) : formatMinutes(durationList.enemy)}
         </Text>        
       </Flex>
     );
