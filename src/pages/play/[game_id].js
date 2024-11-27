@@ -77,8 +77,8 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
   }) 
 
   const [durationList, setDurationList] = useState({
-      self : duration.minutes - userData.duration, 
-      enemy : duration.minutes - enemyData.duration
+      self : duration.minutes - userData.duration - (myTurn && duration.untrackedInterval), 
+      enemy : duration.minutes - enemyData.duration - (!myTurn && duration.untrackedInterval)
   })
 
   const [gameData, setGameData] = useState(gameDetail)
@@ -223,6 +223,7 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
         setOverlay(true);      
       }    
       setUser(userData);
+      console.log(durationList, "GABRIELA")
 
 
 
@@ -234,12 +235,50 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
               // TODO : check if this event fails (get response from BE)
             }
           ))
+          ws.send(JSON.stringify(
+            {
+              "event" : WebSocketConstants.WS_EVENT_GET_GAME_DURATION
+              // TODO : check if this event fails (get response from BE)
+            }
+          ))          
         }, 
         onMessage : async (event) => {
             const response = JSON.parse(event.data) 
             if (response.status != "SUCCESS") {
               return  
             }
+            
+            console.log(response.event)
+            if (response.event == WebSocketConstants.WS_EVENT_GET_GAME_DURATION){
+              // return
+              console.log(response.data)
+              if (myTurn){
+                  if (playerGameStatus.color == "WHITE"){
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      self : duration.minutes - response.data.white
+                    }))
+                  } else {
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      self : duration.minutes - response.data.black
+                    }))
+                  }
+              } else {
+                  if (playerGameStatus.color == "WHITE"){
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      enemy : duration.minutes - response.data.black
+                    }))
+                  } else {
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      enemy : duration.minutes - response.data.white
+                    }))
+                  }
+              }
+            }
+
             if (response.event == WebSocketConstants.WS_EVENT_UPDATE_GAME_STATE) {
 
                 var state = response.data?.state 
@@ -549,29 +588,24 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if (myTurn){
-        setDurationList(
-          (durationList) => (
-            {
-              ...durationList, 
-              self : durationList.self - 1 
-            }
-          )
-        )
-      } else {
-        setDurationList(
-          (durationList) => (
-            {
-              ...durationList, 
-              enemy : durationList.enemy - 1 
-            }
-          )
-        )
-      }
-  }, 1000)
-  
-  return () => clearInterval(timer)
-  }, [myTurn]) 
+      setDurationList((prevList) => {
+        const updatedList = {
+          ...prevList,
+          [myTurn ? 'self' : 'enemy']: prevList[myTurn ? 'self' : 'enemy'] - 1,
+        };
+
+        if (!myTurn && updatedList.enemy === 0) {
+          console.log("END");
+          triggerEndGameWrapper(gameId, token, userData.id, "TIMEOUT");
+          clearInterval(timer); 
+        }
+
+        return updatedList;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer); // Cleanup on unmount
+  }, [myTurn]);
 
   const triggerEndGameWrapper = async (gameId, token, winnerId = "", type) => {
       const data = await triggerEndGame(GAME_API_REST_URL ,gameId, token, winnerId, type)
@@ -755,6 +789,7 @@ export async function getServerSideProps(context){
   var state
 
   try {
+      const startSSR = Date.now();    
       const response = await isAuthenticated(`${API_URL}`, req.cookies?.__SESS_TOKEN, true, game_id);
       
       if (response.code == 200){
@@ -905,6 +940,15 @@ export async function getServerSideProps(context){
           myTurn
         }
 
+        const lastMovement = new Date(matchDataResp?.data?.lastMovement)
+        const currentTime = new Date()
+        const diffInMillis = currentTime - lastMovement;
+        const diffInSeconds = Math.floor(diffInMillis / 1000)        
+
+        const endSSR = Date.now();    
+        const SSRDuration = Math.floor((endSSR - startSSR) / 1000)
+        console.log( matchDataResp?.data?.gameTypeVariant?.duration)
+        console.log(diffInSeconds + SSRDuration)
                  
         return {
           props : {
@@ -917,6 +961,7 @@ export async function getServerSideProps(context){
             kingData,
             duration : {
               minutes : matchDataResp?.data?.gameTypeVariant?.duration,
+              untrackedInterval : diffInSeconds + SSRDuration,
             },
             gameDetail, 
             skillStats,

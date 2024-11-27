@@ -27,7 +27,8 @@ const PlayerProfileGameCard = ({ userData, duration, durationList, self }) => {
           color="white" 
           fontFamily="mono"
         >
-          {self ? formatMinutes(durationList.self) : formatMinutes(durationList.enemy)}
+          {/* {self ? formatMinutes(durationList.self) : formatMinutes(durationList.enemy)} */}
+          {self ? durationList.self : durationList.enemy}
         </Text>        
       </Flex>
     );
