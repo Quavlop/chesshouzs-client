@@ -594,7 +594,7 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
           [myTurn ? 'self' : 'enemy']: prevList[myTurn ? 'self' : 'enemy'] - 1,
         };
 
-        if (!myTurn && updatedList.enemy === 0) {
+        if (!myTurn && updatedList.enemy <= 0) {
           console.log("END");
           triggerEndGameWrapper(gameId, token, userData.id, "TIMEOUT");
           clearInterval(timer); 
