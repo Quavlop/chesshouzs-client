@@ -8,6 +8,7 @@ export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setO
             bg={"#7B61FF"} 
             width={"100%"} 
             height={{base : "300px", lg : "100%"}} 
+            borderRadius={"md"}
             maxW="800px" 
             minW="250px"
             border={"2px solid #B7C0D8"}
@@ -48,16 +49,23 @@ export default function GamePanel({skillStats, onClickHandler, onHoldSkill, setO
 
 
         </Box>
-        <Box 
-            bg={"#E8EDF9"} 
-            // bg={"green"} 
-            height={{base : "300px", lg : "100%"}} 
+
+        <Box
+            bg={"#E8EDF9"}
+            height={{ base: "300px", lg: "100%" }}
             width={"100%"}
             maxW="800px"
             minW="250px"
             border={"2px solid #B7C0D8"}
-        >
-            <Button onClick={resignVerificationHandler}>Resign</Button>
-        </Box>
+            borderRadius={"md"}
+            >
+            <Flex
+                height="100%" // Make Flex take full height of the Box
+                justifyContent="center" // Horizontally center content
+                alignItems="center" // Vertically center content
+            >
+                <Button onClick={resignVerificationHandler} color="white" bg="#7B61FF" w="120px" h="auto" p="10px">Resign</Button>
+            </Flex>
+            </Box>
     </Flex>
 }

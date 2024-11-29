@@ -216,7 +216,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             {/* </Text> */}
             {
               ( (state[row][col]?.character != "." && state[row][col]?.character != '0' && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) || (state[row][col]?.validMove && state[row][col].character != ".")) &&  
-                <Image src={`/icons/game-character/${state[row][col].character}.png`} loading='lazy' alt={state[row][col].character} width={"90%"} height={"90%"} position={"absolute"}/>
+                <Image priority src={`/icons/game-character/${state[row][col].character}.png`} alt={state[row][col].character} width={"90%"} height={"90%"} position={"absolute"}/>
             }
 
         </Box>

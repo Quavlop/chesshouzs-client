@@ -29,6 +29,13 @@ import GameConstants from '@/config/constants/game'
 import { convertGameVariantToWord, formatConventionalGameVariant } from '@/helpers/utils/util';
 
 
+function convertTime(time) {
+  const [first, second] = time.split('-').map(Number);
+  if (second === 0) return `${first / 60} min`
+  return `${first / 60} | ${second}`
+}
+
+
 export default function Play({userData, gameVariants, serverFailure = false, token = ""}) {
 
   const config = getConfig();
@@ -212,8 +219,8 @@ export default function Play({userData, gameVariants, serverFailure = false, tok
                   <FormControl>
                     <Flex gap='3rem'>
                       <Text fontSize='1rem'>Time Control</Text>
-                      <Box bg='grey' w='8rem' display='flex' justifyContent={'center'}>
-                        <Text fontSize='1rem'>{formData.time_control}</Text>
+                      <Box bg='white' w='8rem' display='flex' justifyContent={'center'} border="2px solid #7B61FF" borderRadius={"md"}>
+                        <Text fontSize='1rem'>{convertTime(formData.time_control)}</Text>
                         <Input type="text" disabled value={formData.time_control} hidden/>
                       </Box>
                     </Flex>            
@@ -222,7 +229,7 @@ export default function Play({userData, gameVariants, serverFailure = false, tok
                         return <>
                             <Flex gap='.5rem' mt='1rem'>
                               <Image src="/icons/test.png" w='1.4rem' h='1.4rem'/>
-                              <Text fontSize='1rem'>{type.name}</Text>
+                              <Text fontSize='1rem'>{type.name.toUpperCase()}</Text>
                             </Flex>
 
                             <Flex gap='.5rem' w='100%' flexGrow={1}>

@@ -880,6 +880,7 @@ export async function getServerSideProps(context){
             },
           } 
         }
+        console.log(playerSkillStatus)
         const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, boardSizeStub, playerColorStub)
 
         // enemy 
@@ -947,8 +948,6 @@ export async function getServerSideProps(context){
 
         const endSSR = Date.now();    
         const SSRDuration = Math.floor((endSSR - startSSR) / 1000)
-        console.log( matchDataResp?.data?.gameTypeVariant?.duration)
-        console.log(diffInSeconds + SSRDuration)
                  
         return {
           props : {
