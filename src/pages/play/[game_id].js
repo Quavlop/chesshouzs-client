@@ -39,7 +39,7 @@ import {
 
 
 
-export default function PlayOnline({gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
+export default function PlayOnline({duration, gameId, userData, serverFailure = false, state, color, kingData, gameDetail, token, enemyData, skillStats, playerBuffDebuffStatus, enemyBuffDebuffStatus}) {
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -75,6 +75,11 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
   const [playerGameStatus, setPlayerGameStatus] = useState({
     color, kingPosition : kingData
   }) 
+
+  const [durationList, setDurationList] = useState({
+      self : duration.minutes - userData.duration - (myTurn && duration.untrackedInterval), 
+      enemy : duration.minutes - enemyData.duration - (!myTurn && duration.untrackedInterval)
+  })
 
   const [gameData, setGameData] = useState(gameDetail)
   const [wsConn, setWsConn] = useState(null)
@@ -218,6 +223,9 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
         setOverlay(true);      
       }    
       setUser(userData);
+      console.log(durationList, "GABRIELA")
+
+
 
       const ws = WebSocketClient(GAME_API_WS_URL, token, {
         onOpen : () => { 
@@ -227,12 +235,50 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
               // TODO : check if this event fails (get response from BE)
             }
           ))
+          ws.send(JSON.stringify(
+            {
+              "event" : WebSocketConstants.WS_EVENT_GET_GAME_DURATION
+              // TODO : check if this event fails (get response from BE)
+            }
+          ))          
         }, 
         onMessage : async (event) => {
             const response = JSON.parse(event.data) 
             if (response.status != "SUCCESS") {
               return  
             }
+            
+            console.log(response.event)
+            if (response.event == WebSocketConstants.WS_EVENT_GET_GAME_DURATION){
+              // return
+              console.log(response.data)
+              if (myTurn){
+                  if (playerGameStatus.color == "WHITE"){
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      self : duration.minutes - response.data.white
+                    }))
+                  } else {
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      self : duration.minutes - response.data.black
+                    }))
+                  }
+              } else {
+                  if (playerGameStatus.color == "WHITE"){
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      enemy : duration.minutes - response.data.black
+                    }))
+                  } else {
+                    setDurationList((durationList) => ({
+                      ...durationList, 
+                      enemy : duration.minutes - response.data.white
+                    }))
+                  }
+              }
+            }
+
             if (response.event == WebSocketConstants.WS_EVENT_UPDATE_GAME_STATE) {
 
                 var state = response.data?.state 
@@ -468,6 +514,13 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
               }
               const enemySkillStatusMap = constructBuffDebuffStatusMap(enemySkillStatus, skillStats, gameState.length, playerGameStatus.color == "BLACK" ? "WHITE" : "BLACK")
               setOpponentBuffDebuffStatus(enemySkillStatusMap)
+
+              const enemyColor = playerGameStatus.color == "WHITE" ? "BLACK" : "WHITE"
+              setDurationList({
+                self : playerGameStatus.color == "WHITE" ? duration.minutes - response.data.white_spent_duration : duration.minutes - response.data.black_spent_duration,
+                enemy : enemyColor == "WHITE" ? duration.minutes - response.data.white_spent_duration : duration.minutes - response.data.black_spent_duration,
+              })
+
             } else if (response.event == WebSocketConstants.WS_EVENT_END_GAME) {
                 setOverlay(true)
                 setIsInfoModalActive(true)
@@ -526,6 +579,7 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
     }
     return () => {
       window.removeEventListener('popstate', preventNavigation);
+      // clearInterval(timer)
       if (wsConn){
         wsConn.close()
       }
@@ -533,7 +587,25 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
   }, []);
 
   useEffect(() => {
-  }, [gameState]) 
+    const timer = setInterval(() => {
+      setDurationList((prevList) => {
+        const updatedList = {
+          ...prevList,
+          [myTurn ? 'self' : 'enemy']: prevList[myTurn ? 'self' : 'enemy'] - 1,
+        };
+
+        if (!myTurn && updatedList.enemy <= 0) {
+          console.log("END");
+          triggerEndGameWrapper(gameId, token, userData.id, "TIMEOUT");
+          clearInterval(timer); 
+        }
+
+        return updatedList;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer); // Cleanup on unmount
+  }, [myTurn]);
 
   const triggerEndGameWrapper = async (gameId, token, winnerId = "", type) => {
       const data = await triggerEndGame(GAME_API_REST_URL ,gameId, token, winnerId, type)
@@ -679,6 +751,8 @@ export default function PlayOnline({gameId, userData, serverFailure = false, sta
                   wsConn={wsConn}
                   userData={userData}
                   enemyData={enemyData} 
+                  duration={duration}
+                  durationList={durationList}
                   executeSkill={executeSkillWrapper}
                   buffDebuffStatus={buffDebuffStatus}
                   enemyBuffDebuffStatus={opponentBuffDebuffStatus}
@@ -715,6 +789,7 @@ export async function getServerSideProps(context){
   var state
 
   try {
+      const startSSR = Date.now();    
       const response = await isAuthenticated(`${API_URL}`, req.cookies?.__SESS_TOKEN, true, game_id);
       
       if (response.code == 200){
@@ -745,7 +820,6 @@ export async function getServerSideProps(context){
             },
           } 
         }
-
         if (matchDataResp.data.id != game_id) {
           return {
             redirect: {
@@ -775,6 +849,8 @@ export async function getServerSideProps(context){
         playerColorStub = matchDataResp.data?.whitePlayer.id == response.user?.id ? "WHITE" : "BLACK";
         const enemyData = playerColorStub == "WHITE" ? matchDataResp.data?.blackPlayer : matchDataResp.data?.whitePlayer;
         const myTurn = matchDataResp.data?.turn == playerColorStub;
+        response.user.duration = playerColorStub == "WHITE" ? matchDataResp.data?.whitePlayer?.duration : matchDataResp.data?.blackPlayer?.duration;
+
 
 
 
@@ -804,6 +880,7 @@ export async function getServerSideProps(context){
             },
           } 
         }
+        console.log(playerSkillStatus)
         const playerSkillStatusMap = constructBuffDebuffStatusMap(playerSkillStatus, skillStats, boardSizeStub, playerColorStub)
 
         // enemy 
@@ -864,6 +941,13 @@ export async function getServerSideProps(context){
           myTurn
         }
 
+        const lastMovement = new Date(matchDataResp?.data?.lastMovement)
+        const currentTime = new Date()
+        const diffInMillis = currentTime - lastMovement;
+        const diffInSeconds = Math.floor(diffInMillis / 1000)        
+
+        const endSSR = Date.now();    
+        const SSRDuration = Math.floor((endSSR - startSSR) / 1000)
                  
         return {
           props : {
@@ -874,6 +958,10 @@ export async function getServerSideProps(context){
             state : state, 
             color : playerColorStub, 
             kingData,
+            duration : {
+              minutes : matchDataResp?.data?.gameTypeVariant?.duration,
+              untrackedInterval : diffInSeconds + SSRDuration,
+            },
             gameDetail, 
             skillStats,
             playerBuffDebuffStatus : playerSkillStatusMap,

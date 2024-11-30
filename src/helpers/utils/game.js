@@ -301,6 +301,11 @@ const findKing = (newState, playerColor) => {
     return {row : null, col : null}
 }
 
+function formatMinutes(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}:${mins.toString().padStart(2, '0')}`;
+}
 
 export {
     invalidKingUnderAttackMoves,
@@ -318,4 +323,5 @@ export {
     rookCheck, 
     evolvedPawnCheck, 
     findKing,
+    formatMinutes
 }

@@ -216,7 +216,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
             {/* </Text> */}
             {
               ( (state[row][col]?.character != "." && state[row][col]?.character != '0' && !isSquareCoveredByFog(state, buffDebuffStatus, playerGameStatus.color, row, col)) || (state[row][col]?.validMove && state[row][col].character != ".")) &&  
-                <Image src={`/icons/game-character/${state[row][col].character}.png`} alt={state[row][col].character} width={"90%"} height={"90%"} position={"absolute"}/>
+                <Image priority src={`/icons/game-character/${state[row][col].character}.png`} alt={state[row][col].character} width={"90%"} height={"90%"} position={"absolute"}/>
             }
 
         </Box>
@@ -229,7 +229,7 @@ const GameSquares = ({state, setGameStateHandler, clickCoordinate, clickCoordina
 
 export default  function Board(props){
 
-  const { gameData, userData, enemyData } = props
+  const { gameData, userData, enemyData, duration, durationList } = props
 
   // return
   return   <Box
@@ -243,7 +243,7 @@ export default  function Board(props){
             justifyContent={"center"}
             alignItems={"center"}
           >   
-            <PlayerProfileGameCard userData={enemyData}/>
+            <PlayerProfileGameCard userData={enemyData} duration={duration} durationList={durationList} self={false}/>
 
             
             <Box
@@ -274,7 +274,7 @@ export default  function Board(props){
               </AspectRatio>
             </Box>
             
-            <PlayerProfileGameCard userData={userData}/>
+            <PlayerProfileGameCard userData={userData} duration={duration} durationList={durationList} self={true}/>
 
         </Box>
 

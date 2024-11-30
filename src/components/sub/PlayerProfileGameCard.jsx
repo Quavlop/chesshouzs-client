@@ -1,6 +1,8 @@
 import { Box, SimpleGrid, Grid,GridItem,Flex, Textarea, Button, VStack, HStack, Text, Image, AspectRatio } from '@chakra-ui/react';
+import { formatMinutes } from '@/helpers/utils/game';
 
-const PlayerProfileGameCard = ({ userData }) => {
+
+const PlayerProfileGameCard = ({ userData, duration, durationList, self }) => {
     return (
       <Flex justify="space-between" h={"90%"} maxH={"120px"} w={"90%"} align="center" p={4} bg="#7B61FF" borderRadius="md" boxShadow="md" mb={2}>
         <HStack spacing={4}>
@@ -19,6 +21,14 @@ const PlayerProfileGameCard = ({ userData }) => {
             </Text>
           </VStack>
         </HStack>
+        <Text 
+          fontSize="2xl" 
+          fontWeight="bold" 
+          color="white" 
+          fontFamily="mono"
+        >
+          {self ? formatMinutes(durationList.self) : formatMinutes(durationList.enemy)}
+        </Text>        
       </Flex>
     );
   };
