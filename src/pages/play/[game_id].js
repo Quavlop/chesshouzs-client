@@ -674,10 +674,6 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
     var preState = gameState
     if (playerGameStatus.color == "BLACK"){
       preState = transformBoard(gameState)
-      args.position = {
-        row : gameState.length - position.row - 1,
-        col : gameState.length - position.col - 1,
-      }
     }    
 
     if (skill.autoTrigger){
