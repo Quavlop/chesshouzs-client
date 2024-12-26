@@ -671,8 +671,17 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
       playerId : userData?.id, 
     }
 
+    var preState = gameState
+    if (playerGameStatus.color == "BLACK"){
+      preState = transformBoard(gameState)
+      args.position = {
+        row : gameState.length - position.row - 1,
+        col : gameState.length - position.col - 1,
+      }
+    }    
+
     if (skill.autoTrigger){
-      const data = await execute(skill, gameState, args, GAME_API_REST_URL, token)
+      const data = await execute(skill, preState, args, GAME_API_REST_URL, token)
       if (data.code != 200){
           console.log("FAILS")
       }
