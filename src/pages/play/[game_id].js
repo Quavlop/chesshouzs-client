@@ -598,6 +598,10 @@ export default function PlayOnline({duration, gameId, userData, serverFailure = 
           console.log("END");
           triggerEndGameWrapper(gameId, token, userData.id, "TIMEOUT");
           clearInterval(timer); 
+        } else if (myTurn && updatedList.self <= 0) {
+          console.log("END");
+          triggerEndGameWrapper(gameId, token, enemyData.id, "TIMEOUT");
+          clearInterval(timer); 
         }
 
         return updatedList;
